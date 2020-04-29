@@ -1,0 +1,24 @@
+Date: 2019-03-14
+Running time: 18.0 hours, 51.0 minutes, 49.35 seconds
+CITE-seq-Count Version: 1.4.2
+Reads processed: 103813418
+Percentage mapped: 98
+Percentage unmapped: 2
+Uncorrected cells: 76
+Correction:
+	Cell barcodes collapsing threshold: 1
+	Cell barcodes corrected: 313755
+	UMI collapsing threshold: 2
+	UMIs corrected: 26851796
+Run parameters:
+	Read1_filename: 2958-CH-1-hash-ATTACTCG-TCTTTCCC_S381_R1_001.fastq.gz
+	Read2_filename: 2958-CH-1-hash-ATTACTCG-TCTTTCCC_S381_R2_001.fastq.gz
+	Cell barcode:
+		First position: 1
+		Last position: 16
+	UMI barcode:
+		First position: 17
+		Last position: 26
+	Expected cells: 15400
+	Tags max errors: 2
+	Start trim: 0

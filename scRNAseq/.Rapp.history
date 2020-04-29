@@ -1,0 +1,28 @@
+load("/Users/Corey/Documents/QuarantaLab/WGCNA/cleaningTCGAData.RData")
+head(datExpr)
+alpha = 0.05
+z = qnorm(1-alpha)
+mu0 = 0
+n = 350
+sigma = 0.01
+mua = 0.01
+pnorm(mu0 + z*sigma/sqrt(n), mean = mua, sd = sigma/sqrt(n), lower.tail = False)
+pnorm(mu0 + z*sigma/sqrt(n), mean = mua, sd = sigma/sqrt(n), lower.tail = F)
+sigma = 0.005
+pnorm(mu0 + z*sigma/sqrt(n), mean = mua, sd = sigma/sqrt(n), lower.tail = F)
+sigma = 0.015
+pnorm(mu0 + z*sigma/sqrt(n), mean = mua, sd = sigma/sqrt(n), lower.tail = F)
+sigma = 0.02
+mua = 0.005
+pnorm(mu0 + z*sigma/sqrt(n), mean = mua, sd = sigma/sqrt(n), lower.tail = F)
+power.t.test(n = n, delta = 0.005, sd = sigma/sqrt(n), type = "one.sample", alt = "one.sided")
+power.t.test(n = n, delta = 0.005, sd = sigma, type = "one.sample", alt = "one.sided")
+power.t.test(power = 0.99, delta = 0.005, sd = sigma, type = "one.sample", alt = "one.sided")
+power.t.test(power = 0.99, n = 350, sd = sigma, type = "one.sample", alt = "one.sided")
+power.t.test(power = 0.95, n = 350, sd = sigma, type = "one.sample", alt = "one.sided")
+R.version()
+R.version$os
+R.version
+setwd('~/Documents/QuarantaLab/PC9/scRNAseq/')
+load("umap_vals.RData")
+VUclones_umap_vals

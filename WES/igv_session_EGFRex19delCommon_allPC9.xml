@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Session genome="hg38" hasGeneTrack="true" hasSequenceTrack="true" locus="chr7:55174759-55174798" path="/Users/Corey/Documents/QuarantaLab/PC9/WXS/accre_vars/igv_session_EGFRex19delCommon_allPC9.xml" version="8">
+    <Resources>
+        <Resource path="/Users/Corey/Documents/QuarantaLab/PC9/WXS/accre_vars/sample1_vars.vcf.gz"/>
+        <Resource path="/Users/Corey/Documents/QuarantaLab/PC9/WXS/accre_vars/sample2_vars.vcf.gz"/>
+        <Resource path="/Users/Corey/Documents/QuarantaLab/PC9/WXS/accre_vars/sample6_vars.vcf.gz"/>
+        <Resource path="/Users/Corey/Documents/QuarantaLab/PC9/WXS/accre_vars/sample7_vars.vcf.gz"/>
+        <Resource path="/Users/Corey/Documents/QuarantaLab/PC9/WXS/accre_vars/sample5_vars.vcf.gz"/>
+        <Resource path="/Users/Corey/Documents/QuarantaLab/PC9/WXS/accre_vars/sample8_vars.vcf.gz"/>
+        <Resource path="/Users/Corey/Documents/QuarantaLab/PC9/WXS/accre_vars/sample3_vars.vcf.gz"/>
+        <Resource path="/Users/Corey/Documents/QuarantaLab/PC9/WXS/accre_vars/sample4_vars.vcf.gz"/>
+    </Resources>
+    <Panel height="545" name="DataPanel" width="1423">
+        <Track SQUISHED_ROW_HEIGHT="4" altColor="0,0,178" autoScale="false" clazz="org.broad.igv.track.FeatureTrack" color="0,0,178" colorMode="GENOTYPE" displayMode="COLLAPSED" featureVisibilityWindow="1998000" fontSize="16" id="/Users/Corey/Documents/QuarantaLab/PC9/WXS/accre_vars/sample1_vars.vcf.gz" name="PC9-VU" renderer="BASIC_FEATURE" siteColorMode="ALLELE_FREQUENCY" sortable="false" visible="true" windowFunction="count"/>
+        <Track SQUISHED_ROW_HEIGHT="4" altColor="0,0,178" autoScale="false" clazz="org.broad.igv.track.FeatureTrack" color="0,0,178" colorMode="GENOTYPE" displayMode="COLLAPSED" featureVisibilityWindow="1998000" fontSize="16" id="/Users/Corey/Documents/QuarantaLab/PC9/WXS/accre_vars/sample2_vars.vcf.gz" name="PC9-MGH" renderer="BASIC_FEATURE" siteColorMode="ALLELE_FREQUENCY" sortable="false" visible="true" windowFunction="count"/>
+        <Track SQUISHED_ROW_HEIGHT="4" altColor="0,0,178" autoScale="false" clazz="org.broad.igv.track.FeatureTrack" color="0,0,178" colorMode="GENOTYPE" displayMode="COLLAPSED" featureVisibilityWindow="1998000" fontSize="16" id="/Users/Corey/Documents/QuarantaLab/PC9/WXS/accre_vars/sample3_vars.vcf.gz" name="PC9-BR1" renderer="BASIC_FEATURE" siteColorMode="ALLELE_FREQUENCY" sortable="false" visible="true" windowFunction="count"/>
+        <Track SQUISHED_ROW_HEIGHT="4" altColor="0,0,178" autoScale="false" clazz="org.broad.igv.track.FeatureTrack" color="0,0,178" colorMode="GENOTYPE" displayMode="COLLAPSED" featureVisibilityWindow="1998000" fontSize="16" id="/Users/Corey/Documents/QuarantaLab/PC9/WXS/accre_vars/sample4_vars.vcf.gz" name="DS3" renderer="BASIC_FEATURE" siteColorMode="ALLELE_FREQUENCY" sortable="false" visible="true" windowFunction="count"/>
+        <Track SQUISHED_ROW_HEIGHT="4" altColor="0,0,178" autoScale="false" clazz="org.broad.igv.track.FeatureTrack" color="0,0,178" colorMode="GENOTYPE" displayMode="COLLAPSED" featureVisibilityWindow="1998000" fontSize="16" id="/Users/Corey/Documents/QuarantaLab/PC9/WXS/accre_vars/sample5_vars.vcf.gz" name="DS6" renderer="BASIC_FEATURE" siteColorMode="ALLELE_FREQUENCY" sortable="false" visible="true" windowFunction="count"/>
+        <Track SQUISHED_ROW_HEIGHT="4" altColor="0,0,178" autoScale="false" clazz="org.broad.igv.track.FeatureTrack" color="0,0,178" colorMode="GENOTYPE" displayMode="COLLAPSED" featureVisibilityWindow="1998000" fontSize="16" id="/Users/Corey/Documents/QuarantaLab/PC9/WXS/accre_vars/sample6_vars.vcf.gz" name="DS7" renderer="BASIC_FEATURE" siteColorMode="ALLELE_FREQUENCY" sortable="false" visible="true" windowFunction="count"/>
+        <Track SQUISHED_ROW_HEIGHT="4" altColor="0,0,178" autoScale="false" clazz="org.broad.igv.track.FeatureTrack" color="0,0,178" colorMode="GENOTYPE" displayMode="COLLAPSED" featureVisibilityWindow="1998000" fontSize="16" id="/Users/Corey/Documents/QuarantaLab/PC9/WXS/accre_vars/sample7_vars.vcf.gz" name="DS8" renderer="BASIC_FEATURE" siteColorMode="ALLELE_FREQUENCY" sortable="false" visible="true" windowFunction="count"/>
+        <Track SQUISHED_ROW_HEIGHT="4" altColor="0,0,178" autoScale="false" clazz="org.broad.igv.track.FeatureTrack" color="0,0,178" colorMode="GENOTYPE" displayMode="COLLAPSED" featureVisibilityWindow="1998000" fontSize="16" id="/Users/Corey/Documents/QuarantaLab/PC9/WXS/accre_vars/sample8_vars.vcf.gz" name="DS9" renderer="BASIC_FEATURE" siteColorMode="ALLELE_FREQUENCY" sortable="false" visible="true" windowFunction="count"/>
+    </Panel>
+    <Panel height="59" name="FeaturePanel" width="1423">
+        <Track altColor="0,0,178" autoScale="false" color="0,0,178" displayMode="COLLAPSED" featureVisibilityWindow="-1" fontSize="10" id="Reference sequence" name="Reference sequence" sortable="false" visible="true"/>
+        <Track altColor="0,0,178" autoScale="false" clazz="org.broad.igv.track.FeatureTrack" color="0,0,178" colorScale="ContinuousColorScale;0.0;402.0;255,255,255;0,0,178" displayMode="COLLAPSED" featureVisibilityWindow="-1" fontSize="16" height="35" id="hg38_genes" name="Gene" renderer="BASIC_FEATURE" sortable="false" visible="true" windowFunction="count">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="402.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+    </Panel>
+    <PanelLayout dividerFractions="0.8952536824877251"/>
+    <HiddenAttributes>
+        <Attribute name="DATA FILE"/>
+        <Attribute name="DATA TYPE"/>
+        <Attribute name="NAME"/>
+    </HiddenAttributes>
+</Session>

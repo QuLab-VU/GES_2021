@@ -1,0 +1,133 @@
+[WARNING] Read1 length is 150bp but you are using 26bp for Cell and UMI barcodes combined.
+This might lead to wrong cell attribution and skewed umi counts.
+
+Counting number of reads
+Started mapping
+Processing 103,813,418 reads
+CITE-seq-Count is running with 24 cores.
+Processed 1,000,000 reads in 1.0 minute, 58.49 seconds. Total reads: 1,000,000 in child 42301
+Processed 1,000,000 reads in 1.0 minute, 22.45 seconds. Total reads: 2,000,000 in child 42301
+Processed 1,000,000 reads in 1.0 minute, 13.09 seconds. Total reads: 3,000,000 in child 42301
+Processed 1,000,000 reads in 1.0 minute, 22.87 seconds. Total reads: 4,000,000 in child 42301
+Processed 1,000,000 reads in 6.0 minutes, 21.31 seconds. Total reads: 1,000,000 in child 42302
+Mapping done for process 42301. Processed 4,325,559 reads
+Processed 1,000,000 reads in 1.0 minute, 44.03 seconds. Total reads: 2,000,000 in child 42302
+Processed 1,000,000 reads in 1.0 minute, 3.616 seconds. Total reads: 3,000,000 in child 42302
+Processed 1,000,000 reads in 10.0 minutes, 29.09 seconds. Total reads: 1,000,000 in child 42303
+Processed 1,000,000 reads in 1.0 minute, 52.21 seconds. Total reads: 4,000,000 in child 42302
+Mapping done for process 42302. Processed 4,325,559 reads
+Processed 1,000,000 reads in 1.0 minute, 23.8 seconds. Total reads: 2,000,000 in child 42303
+Processed 1,000,000 reads in 46.77 seconds. Total reads: 3,000,000 in child 42303
+Processed 1,000,000 reads in 1.0 minute, 15.37 seconds. Total reads: 4,000,000 in child 42303
+Mapping done for process 42303. Processed 4,325,559 reads
+Processed 1,000,000 reads in 15.0 minutes, 32.26 seconds. Total reads: 1,000,000 in child 42304
+Processed 1,000,000 reads in 1.0 minute, 22.22 seconds. Total reads: 2,000,000 in child 42304
+Processed 1,000,000 reads in 1.0 minute, 20.67 seconds. Total reads: 3,000,000 in child 42304
+Processed 1,000,000 reads in 18.0 minutes, 55.99 seconds. Total reads: 1,000,000 in child 42305
+Processed 1,000,000 reads in 54.69 seconds. Total reads: 4,000,000 in child 42304
+Mapping done for process 42304. Processed 4,325,559 reads
+Processed 1,000,000 reads in 1.0 minute, 26.43 seconds. Total reads: 2,000,000 in child 42305
+Processed 1,000,000 reads in 1.0 minute, 30.35 seconds. Total reads: 3,000,000 in child 42305
+Processed 1,000,000 reads in 59.39 seconds. Total reads: 4,000,000 in child 42305
+Mapping done for process 42305. Processed 4,325,559 reads
+Processed 1,000,000 reads in 23.0 minutes, 25.22 seconds. Total reads: 1,000,000 in child 42306
+Processed 1,000,000 reads in 1.0 minute, 8.706 seconds. Total reads: 2,000,000 in child 42306
+Processed 1,000,000 reads in 1.0 minute, 24.41 seconds. Total reads: 3,000,000 in child 42306
+Processed 1,000,000 reads in 26.0 minutes, 33.52 seconds. Total reads: 1,000,000 in child 42307
+Processed 1,000,000 reads in 58.91 seconds. Total reads: 4,000,000 in child 42306
+Mapping done for process 42306. Processed 4,325,559 reads
+Processed 1,000,000 reads in 1.0 minute, 21.76 seconds. Total reads: 2,000,000 in child 42307
+Processed 1,000,000 reads in 1.0 minute, 1.164 seconds. Total reads: 3,000,000 in child 42307
+Processed 1,000,000 reads in 59.48 seconds. Total reads: 4,000,000 in child 42307
+Mapping done for process 42307. Processed 4,325,559 reads
+Processed 1,000,000 reads in 31.0 minutes, 18.33 seconds. Total reads: 1,000,000 in child 42308
+Processed 1,000,000 reads in 52.65 seconds. Total reads: 2,000,000 in child 42308
+Processed 1,000,000 reads in 53.72 seconds. Total reads: 3,000,000 in child 42308
+Processed 1,000,000 reads in 1.0 minute, 3.554 seconds. Total reads: 4,000,000 in child 42308
+Processed 1,000,000 reads in 34.0 minutes, 18.24 seconds. Total reads: 1,000,000 in child 42309
+Mapping done for process 42308. Processed 4,325,559 reads
+Processed 1,000,000 reads in 56.71 seconds. Total reads: 2,000,000 in child 42309
+Processed 1,000,000 reads in 1.0 minute, 15.92 seconds. Total reads: 3,000,000 in child 42309
+Processed 1,000,000 reads in 1.0 minute, 4.963 seconds. Total reads: 4,000,000 in child 42309
+Mapping done for process 42309. Processed 4,325,559 reads
+Processed 1,000,000 reads in 39.0 minutes, 2.192 seconds. Total reads: 1,000,000 in child 42310
+Processed 1,000,000 reads in 46.07 seconds. Total reads: 2,000,000 in child 42310
+Processed 1,000,000 reads in 1.0 minute, 6.014 seconds. Total reads: 3,000,000 in child 42310
+Processed 1,000,000 reads in 42.62 seconds. Total reads: 4,000,000 in child 42310
+Processed 1,000,000 reads in 41.0 minutes, 46.78 seconds. Total reads: 1,000,000 in child 42311
+Mapping done for process 42310. Processed 4,325,559 reads
+Processed 1,000,000 reads in 1.0 minute, 10.1 seconds. Total reads: 2,000,000 in child 42311
+Processed 1,000,000 reads in 58.51 seconds. Total reads: 3,000,000 in child 42311
+Processed 1,000,000 reads in 44.0 minutes, 45.09 seconds. Total reads: 1,000,000 in child 42312
+Processed 1,000,000 reads in 54.33 seconds. Total reads: 4,000,000 in child 42311
+Mapping done for process 42311. Processed 4,325,559 reads
+Processed 1,000,000 reads in 1.0 minute, 17.47 seconds. Total reads: 2,000,000 in child 42312
+Processed 1,000,000 reads in 34.91 seconds. Total reads: 3,000,000 in child 42312
+Processed 1,000,000 reads in 42.33 seconds. Total reads: 4,000,000 in child 42312
+Mapping done for process 42312. Processed 4,325,559 reads
+Processed 1,000,000 reads in 48.0 minutes, 43.62 seconds. Total reads: 1,000,000 in child 42313
+Processed 1,000,000 reads in 44.84 seconds. Total reads: 2,000,000 in child 42313
+Processed 1,000,000 reads in 58.83 seconds. Total reads: 3,000,000 in child 42313
+Processed 1,000,000 reads in 51.0 minutes, 8.562 seconds. Total reads: 1,000,000 in child 42314
+Processed 1,000,000 reads in 1.0 minute, 3.622 seconds. Total reads: 4,000,000 in child 42313
+Mapping done for process 42313. Processed 4,325,559 reads
+Processed 1,000,000 reads in 1.0 minute, 23.2 seconds. Total reads: 2,000,000 in child 42314
+Processed 1,000,000 reads in 58.79 seconds. Total reads: 3,000,000 in child 42314
+Processed 1,000,000 reads in 1.0 minute, 29.01 seconds. Total reads: 4,000,000 in child 42314
+Processed 1,000,000 reads in 55.0 minutes, 16.36 seconds. Total reads: 1,000,000 in child 42315
+Mapping done for process 42314. Processed 4,325,559 reads
+Processed 1,000,000 reads in 44.0 seconds. Total reads: 2,000,000 in child 42315
+Processed 1,000,000 reads in 58.79 seconds. Total reads: 3,000,000 in child 42315
+Processed 1,000,000 reads in 1.0 minute, 10.62 seconds. Total reads: 4,000,000 in child 42315
+Mapping done for process 42315. Processed 4,325,559 reads
+Processed 1,000,000 reads in 59.0 minutes, 54.21 seconds. Total reads: 1,000,000 in child 42316
+Processed 1,000,000 reads in 54.77 seconds. Total reads: 2,000,000 in child 42316
+Processed 1,000,000 reads in 30.95 seconds. Total reads: 3,000,000 in child 42316
+Processed 1,000,000 reads in 1.0 hour, 1.0 minute, 44.66 seconds. Total reads: 1,000,000 in child 42317
+Processed 1,000,000 reads in 40.02 seconds. Total reads: 4,000,000 in child 42316
+Mapping done for process 42316. Processed 4,325,559 reads
+Processed 1,000,000 reads in 1.0 minute, 36.57 seconds. Total reads: 2,000,000 in child 42317
+Processed 1,000,000 reads in 1.0 minute, 6.306 seconds. Total reads: 3,000,000 in child 42317
+Processed 1,000,000 reads in 31.19 seconds. Total reads: 4,000,000 in child 42317
+Processed 1,000,000 reads in 1.0 hour, 5.0 minutes, 18.53 seconds. Total reads: 1,000,000 in child 42318
+Mapping done for process 42317. Processed 4,325,559 reads
+Processed 1,000,000 reads in 44.34 seconds. Total reads: 2,000,000 in child 42318
+Processed 1,000,000 reads in 47.3 seconds. Total reads: 3,000,000 in child 42318
+Processed 1,000,000 reads in 45.32 seconds. Total reads: 4,000,000 in child 42318
+Mapping done for process 42318. Processed 4,325,559 reads
+Processed 1,000,000 reads in 1.0 hour, 8.0 minutes, 7.684 seconds. Total reads: 1,000,000 in child 42319
+Processed 1,000,000 reads in 45.62 seconds. Total reads: 2,000,000 in child 42319
+Processed 1,000,000 reads in 25.6 seconds. Total reads: 3,000,000 in child 42319
+Processed 1,000,000 reads in 30.26 seconds. Total reads: 4,000,000 in child 42319
+Mapping done for process 42319. Processed 4,325,559 reads
+Processed 1,000,000 reads in 1.0 hour, 10.0 minutes, 29.28 seconds. Total reads: 1,000,000 in child 42320
+Processed 1,000,000 reads in 32.36 seconds. Total reads: 2,000,000 in child 42320
+Processed 1,000,000 reads in 56.53 seconds. Total reads: 3,000,000 in child 42320
+Processed 1,000,000 reads in 56.49 seconds. Total reads: 4,000,000 in child 42320
+Mapping done for process 42320. Processed 4,325,559 reads
+Processed 1,000,000 reads in 1.0 hour, 13.0 minutes, 54.58 seconds. Total reads: 1,000,000 in child 42321
+Processed 1,000,000 reads in 50.26 seconds. Total reads: 2,000,000 in child 42321
+Processed 1,000,000 reads in 59.77 seconds. Total reads: 3,000,000 in child 42321
+Processed 1,000,000 reads in 1.0 minute, 23.69 seconds. Total reads: 4,000,000 in child 42321
+Processed 1,000,000 reads in 1.0 hour, 17.0 minutes, 49.52 seconds. Total reads: 1,000,000 in child 42322
+Mapping done for process 42321. Processed 4,325,559 reads
+Processed 1,000,000 reads in 1.0 minute, 42.48 seconds. Total reads: 2,000,000 in child 42322
+Processed 1,000,000 reads in 1.0 hour, 19.0 minutes, 37.48 seconds. Total reads: 1,000,000 in child 42323
+Processed 1,000,000 reads in 29.05 seconds. Total reads: 2,000,000 in child 42323
+Processed 1,000,000 reads in 34.92 seconds. Total reads: 3,000,000 in child 42323
+Processed 1,000,000 reads in 1.0 minute, 20.47 seconds. Total reads: 3,000,000 in child 42322
+Processed 1,000,000 reads in 25.16 seconds. Total reads: 4,000,000 in child 42322
+Processed 1,000,000 reads in 44.0 seconds. Total reads: 4,000,000 in child 42323
+Mapping done for process 42322. Processed 4,325,559 reads
+Mapping done for process 42323. Processed 4,325,559 reads
+Processed 1,000,000 reads in 1.0 hour, 23.0 minutes, 19.25 seconds. Total reads: 1,000,000 in child 42324
+Processed 1,000,000 reads in 30.66 seconds. Total reads: 2,000,000 in child 42324
+Processed 1,000,000 reads in 22.33 seconds. Total reads: 3,000,000 in child 42324
+Processed 1,000,000 reads in 22.38 seconds. Total reads: 4,000,000 in child 42324
+Mapping done for process 42324. Processed 4,325,561 reads
+Mapping done
+Merging results
+Correcting cell barcodes
+Finding a whitelist
+Collapsing cell barcodes
+Correcting umis
