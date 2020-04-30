@@ -1,0 +1,102 @@
+#!/bin/bash
+#SBATCH --mail-user=<corey.hayford@vanderbilt.edu>
+#SBATCH --mail-type=ALL
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=8
+#SBATCH --ntasks=1
+#SBATCH --time=36:00:00
+#SBATCH --mem=32G
+#SBATCH --output=pipelineWXS_SampleN.out
+
+# Add {base} so all are separate
+
+R1=$1
+R2=$2
+REFERENCE='/data/lola/hayforc/Homo_sapiens_assembly38.fasta'
+MILLS='/scratch/hayforc/known_variants/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz'
+DBSNP='/scratch/hayforc/known_variants/Homo_sapiens_assembly38.dbsnp138.vcf'
+
+cd /data/lola/hayforc/WXS/PC9
+mkdir Sample2
+cd Sample2/
+
+module load GCC/6.4.0-2.28
+module load Intel/2017.4.196
+module load BWA/0.7.17
+
+bwa mem $REFERENCE $R1 $R2 -M -t $SLURM_NTASKS_PER_NODE > Aligned.out.sam
+
+module load SAMtools/1.6
+
+samtools view -bS Aligned.out.sam | samtools sort -o aligned_sorted.bam
+
+module load picard/2.17.10
+# call using java -jar $EBROOTPICARD/picard.jar
+
+java -jar $EBROOTPICARD/picard.jar MarkDuplicates \
+    I=aligned_sorted.bam \
+    O=deduped.bam  \
+    AS=true \
+    CREATE_INDEX=true \
+    VALIDATION_STRINGENCY=LENIENT \
+    M=output.metrics
+
+java -jar $EBROOTPICARD/picard.jar AddOrReplaceReadGroups \
+    I=deduped.bam \
+    O=rg_added_deduped_sorted.bam \
+    SO=coordinate \
+    RGID=id \
+    RGLB=library \
+    RGPL=illumina \
+    RGPU=machine \
+    RGSM=sample \
+    VALIDATION_STRINGENCY=LENIENT
+
+
+java -jar $EBROOTPICARD/picard.jar ReorderSam \
+    I=rg_added_deduped_sorted.bam \
+    O=reordered.bam \
+    R=$REFERENCE \
+    CREATE_INDEX=TRUE
+
+module load GATK/3.8-0
+# call using java -jar $EBROOTGATK/GenomeAnalysisTK.jar
+
+samtools view -bS reordered.bam | samtools sort -o sorted.bam
+samtools index sorted.bam
+
+java -jar $EBROOTGATK/GenomeAnalysisTK.jar \
+    -T RealignerTargetCreator \
+    -R $REFERENCE \
+    -I sorted.bam \
+    -o realigner.intervals
+
+java -jar $EBROOTGATK/GenomeAnalysisTK.jar \
+    -T IndelRealigner \
+    -R $REFERENCE \
+    -I sorted.bam \
+    -known $MILLS \
+    -targetIntervals realigner.intervals \
+    -o realigned.bam
+
+java -jar $EBROOTGATK/GenomeAnalysisTK.jar \
+    -T BaseRecalibrator \
+    -R $REFERENCE \
+    -I realigned.bam \
+    -knownSites $DBSNP \
+    -knownSites $MILLS \
+    -o recal.table
+
+java -jar $EBROOTGATK/GenomeAnalysisTK.jar \
+    -T PrintReads  \
+    -R $REFERENCE \
+    -I realigned.bam \
+    -BQSR recal.table \
+    -o recal.bam
+
+java -jar $EBROOTGATK/GenomeAnalysisTK.jar \
+    -T HaplotypeCaller \
+    -R $REFERENCE \
+    -ERC GVCF \
+    -I recal.bam \
+    -o called_vars.g.vcf \

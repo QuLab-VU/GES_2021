@@ -1,0 +1,8 @@
+# Manually changed called_vars.g.vcf to SampleN_called_vars.g.vcf 
+# prior to this code. This is an example and was done for all
+# samples.
+java -jar $EBROOTPICARD/picard.jar \
+RenameSampleInVcf \
+I=Sample1_called_vars.g.vcf \
+O=Sample1_called_vars_named.g.vcf \
+NEW_SAMPLE_NAME=sample1

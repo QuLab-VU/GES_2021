@@ -10,7 +10,7 @@ setwd('~/Documents/QuarantaLab/GES_2020/scRNAseq/')
 
 # Read in hashtag oligonucleotide (HTO) library
 ## This matrix includes all 8 HTOs. This library comes
-## from the CITEseq Count function (see Methods)
+## from the CITEseq Count function (see Methods and HTO_count.txt file)
 matrix_dir = "umi_count/"
 barcode.path <- paste0(matrix_dir, "barcodes.tsv.gz")
 features.path <- paste0(matrix_dir, "features.tsv.gz")
@@ -23,8 +23,8 @@ rownames(mat) = feature.names$V1
 dat_HTO <- mat
 
 # Read in single-cell RNAseq count data
-## This count matrix will include all 8 samples. Annotation with hashing
-## labels below
+## This count matrix will include all 8 samples. Output from Cell Ranger.
+##Annotation with hashing labels below.
 matrix_dir_rna = "/Volumes/quaranta/Data/RNAseq/PC9_scRNAseq/outs/filtered_feature_bc_matrix/"
 barcode.path_rna <- paste0(matrix_dir_rna, "barcodes.tsv.gz")
 features.path_rna <- paste0(matrix_dir_rna, "features.tsv.gz")

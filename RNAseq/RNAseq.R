@@ -4,7 +4,7 @@ library(ggplot2)
 library(DESeq2)
 library(biomaRt)
 
-# Load counts from featureCounts output
+# Load counts from featureCounts output - see RNAseq_processing.txt
 VU_counts <- read.csv(file = "Sample1/2959-CH-1-AAGACCGT-GTCGATTG_S10_R1_001.fastq.gz_featurecounts.txt",
                          sep = "", header = T, skip = 1, row.names = "Geneid")
 MGH_counts <- read.csv(file = "Sample2/2959-CH-2-TTGCGAGA-TATGGCAC_S11_R1_001.fastq.gz_featurecounts.txt",
