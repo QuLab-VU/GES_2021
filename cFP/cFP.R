@@ -530,7 +530,7 @@ ggplot(VU_exp, aes(x=Time, y=nl2, group=variable)) +
 #############################################################################
 
 # Pulling and cleaning model simulation data
-setwd("~/git/ThreeStateMelanoma/")
+setwd("~/git/GES_2020/cFP/")
 DS1_trajs <- read.csv('trajectories_DS1_G50.csv', row.names = 1)
 DS1_trajs <- DS1_trajs[,colSums(is.na(DS1_trajs))<nrow(DS1_trajs)]
 names(DS1_trajs) <- seq(ncol(DS1_trajs))

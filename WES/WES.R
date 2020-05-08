@@ -435,6 +435,7 @@ getExtras <- function(data) {
   return(data)
 }
 
+# Data can be generated from VCFtoVEP.txt script or provided upon request
 setwd('/Volumes/quaranta/Data/WXS/PC9/vep_data')
 
 ## Cell Line Versions
