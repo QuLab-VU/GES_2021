@@ -50,6 +50,6 @@ from the fastq files and an R script that runs a simple clustering and visualiza
 for all cell populations.
 
 
-Data can be accessed in the following databases:
-	SRA (#######)
-	GEO (GSE150025)
+Seqeuncing data can be accessed in the following databases:
+	SRA (PRJNA631050)
+	GEO (GSE150084)
