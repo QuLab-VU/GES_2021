@@ -51,5 +51,5 @@ for all cell populations.
 
 
 Seqeuncing data can be accessed in the following databases:
-	SRA (PRJNA631050)
+	SRA (PRJNA631050, PRJNA632351)
 	GEO (GSE150084)
