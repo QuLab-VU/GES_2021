@@ -68,33 +68,7 @@ upset(fromExpression(upset_CLV), order.by = "freq",
       mainbar.y.label = "Number of Mutations", sets.x.label = "Set Size", set_size.scale_max = 160000,
       text.scale = c(2, 1.5, 2, 1.5, 2, 1))
 
-### Sublines excluding DS8
-shared_vars_sublines_noDS8 <- read.csv("shared_variants_sublines_noDS8.csv", header = T)
-upset_sublines_noDS8 <- c("DS3" = shared_vars_sublines_noDS8[1, "Number"],
-                          "DS6" = shared_vars_sublines_noDS8[2, "Number"],
-                          "DS7" = shared_vars_sublines_noDS8[3, "Number"],
-                          "DS9" = shared_vars_sublines_noDS8[4, "Number"],
-                          "DS3&DS6" = shared_vars_sublines_noDS8[5, "Number"],
-                          "DS3&DS7" = shared_vars_sublines_noDS8[6, "Number"],
-                          "DS3&DS9" = shared_vars_sublines_noDS8[7, "Number"],
-                          "DS6&DS7" = shared_vars_sublines_noDS8[8, "Number"],
-                          "DS6&DS9" = shared_vars_sublines_noDS8[9, "Number"],
-                          "DS7&DS9" = shared_vars_sublines_noDS8[10, "Number"],
-                          "DS3&DS6&DS7" = shared_vars_sublines_noDS8[11, "Number"],
-                          "DS3&DS6&DS9" = shared_vars_sublines_noDS8[12, "Number"],
-                          "DS3&DS7&DS9" = shared_vars_sublines_noDS8[13, "Number"],
-                          "DS6&DS7&DS9" = shared_vars_sublines_noDS8[14, "Number"],
-                          "DS3&DS6&DS7&DS9" = shared_vars_sublines_noDS8[15, "Number"])
-
-### FIG. S5D - saved as 6x9 PDF
-upset(fromExpression(upset_sublines_noDS8), order.by = "freq",
-      sets.bar.color = c("brown", "deeppink", "gold", "darkorchid"), 
-      mb.ratio = c(0.55, 0.45), nintersects = NA,
-      show.numbers = "no", point.size = 5, line.size = 0.5, mainbar.y.max = 106000,
-      mainbar.y.label = "Number of Mutations", sets.x.label = "Set Size", set_size.scale_max = 160000,
-      text.scale = c(2, 1.5, 2, 1.5, 2, 1))
-
-### Sublines including DS8
+### Sublines
 shared_vars_sublines <- read.csv("shared_variants_sublines.csv", header = T)
 upset_sublines <- c("DS3" = shared_vars_sublines[1, "Number"],
                     "DS6" = shared_vars_sublines[2, "Number"],
@@ -128,13 +102,89 @@ upset_sublines <- c("DS3" = shared_vars_sublines[1, "Number"],
                     "DS6&DS7&DS8&DS9" = shared_vars_sublines[30, "Number"],
                     "DS3&DS6&DS7&DS8&DS9" = shared_vars_sublines[31, "Number"])
 
-### FIG. S5E - saved as 6x9 PDF
+### FIG. S5D - saved as 6x9 PDF
 upset(fromExpression(upset_sublines), order.by = "freq",
       sets.bar.color = c("brown", "seagreen", "deeppink", "gold", "darkorchid"), 
       mb.ratio = c(0.55, 0.45), nintersects = NA,
       show.numbers = "no", point.size = 5, line.size = 0.5, mainbar.y.max = 106000,
       mainbar.y.label = "Number of Mutations", sets.x.label = "Set Size", set_size.scale_max = 160000,
       text.scale = c(2, 1.5, 2, 1.5, 2, 1))
+
+
+### Sublines including VU
+shared_vars_VUDS <- read.csv("shared_variants_VUDSlines.csv", header = T)
+upset_VUDS <- c("VU" = shared_vars_VUDS[1, "Number"],
+                "DS3" = shared_vars_VUDS[2, "Number"],
+                "DS6" = shared_vars_VUDS[3, "Number"],
+                "DS7" = shared_vars_VUDS[4, "Number"],
+                "DS8" = shared_vars_VUDS[5, "Number"],
+                "DS9" = shared_vars_VUDS[6, "Number"],
+                "VU&DS3" = shared_vars_VUDS[7, "Number"],
+                "VU&DS6" = shared_vars_VUDS[8, "Number"],
+                "VU&DS7" = shared_vars_VUDS[9, "Number"],
+                "VU&DS8" = shared_vars_VUDS[10, "Number"],
+                "VU&DS9" = shared_vars_VUDS[11, "Number"],
+                "DS3&DS6" = shared_vars_VUDS[12, "Number"],
+                "DS3&DS7" = shared_vars_VUDS[13, "Number"],
+                "DS3&DS8" = shared_vars_VUDS[14, "Number"],
+                "DS3&DS9" = shared_vars_VUDS[15, "Number"],
+                "DS6&DS7" = shared_vars_VUDS[16, "Number"],
+                "DS6&DS8" = shared_vars_VUDS[17, "Number"],
+                "DS6&DS9" = shared_vars_VUDS[18, "Number"],
+                "DS7&DS8" = shared_vars_VUDS[19, "Number"],
+                "DS7&DS9" = shared_vars_VUDS[20, "Number"],
+                "DS8&DS9" = shared_vars_VUDS[21, "Number"],
+                "VU&DS3&DS6" = shared_vars_VUDS[22, "Number"],
+                "VU&DS3&DS7" = shared_vars_VUDS[23, "Number"],
+                "VU&DS3&DS8" = shared_vars_VUDS[24, "Number"],
+                "VU&DS3&DS9" = shared_vars_VUDS[25, "Number"],
+                "VU&DS6&DS7" = shared_vars_VUDS[26, "Number"],
+                "VU&DS6&DS8" = shared_vars_VUDS[27, "Number"],
+                "VU&DS6&DS9" = shared_vars_VUDS[28, "Number"],
+                "VU&DS7&DS8" = shared_vars_VUDS[29, "Number"],
+                "VU&DS7&DS9" = shared_vars_VUDS[30, "Number"],
+                "VU&DS8&DS9" = shared_vars_VUDS[31, "Number"],
+                "DS3&DS6&DS7" = shared_vars_VUDS[32, "Number"],
+                "DS3&DS6&DS8" = shared_vars_VUDS[33, "Number"],
+                "DS3&DS6&DS9" = shared_vars_VUDS[34, "Number"],
+                "DS3&DS7&DS8" = shared_vars_VUDS[35, "Number"],
+                "DS3&DS7&DS9" = shared_vars_VUDS[36, "Number"],
+                "DS3&DS8&DS9" = shared_vars_VUDS[37, "Number"],
+                "DS6&DS7&DS8" = shared_vars_VUDS[38, "Number"],
+                "DS6&DS7&DS9" = shared_vars_VUDS[39, "Number"],
+                "DS6&DS8&DS9" = shared_vars_VUDS[40, "Number"],
+                "DS7&DS8&DS9" = shared_vars_VUDS[41, "Number"],
+                "VU&DS3&DS6&DS7" = shared_vars_VUDS[42, "Number"],
+                "VU&DS3&DS6&DS8" = shared_vars_VUDS[43, "Number"],
+                "VU&DS3&DS6&DS9" = shared_vars_VUDS[44, "Number"],
+                "VU&DS3&DS7&DS8" = shared_vars_VUDS[45, "Number"],
+                "VU&DS3&DS7&DS9" = shared_vars_VUDS[46, "Number"],
+                "VU&DS3&DS8&DS9" = shared_vars_VUDS[47, "Number"],
+                "VU&DS6&DS7&DS8" = shared_vars_VUDS[48, "Number"],
+                "VU&DS6&DS7&DS9" = shared_vars_VUDS[49, "Number"],
+                "VU&DS6&DS8&DS9" = shared_vars_VUDS[50, "Number"],
+                "VU&DS7&DS8&DS9" = shared_vars_VUDS[51, "Number"],
+                "DS3&DS6&DS7&DS8" = shared_vars_VUDS[52, "Number"],
+                "DS3&DS6&DS7&DS9" = shared_vars_VUDS[53, "Number"],
+                "DS3&DS6&DS8&DS9" = shared_vars_VUDS[54, "Number"],
+                "DS3&DS7&DS8&DS9" = shared_vars_VUDS[55, "Number"],
+                "DS6&DS7&DS8&DS9" = shared_vars_VUDS[56, "Number"],
+                "VU&DS3&DS6&DS7&DS8" = shared_vars_VUDS[57, "Number"],
+                "VU&DS3&DS6&DS7&DS9" = shared_vars_VUDS[58, "Number"],
+                "VU&DS3&DS6&DS8&DS9" = shared_vars_VUDS[59, "Number"],
+                "VU&DS3&DS7&DS8&DS9" = shared_vars_VUDS[60, "Number"],
+                "VU&DS6&DS7&DS8&DS9" = shared_vars_VUDS[61, "Number"],
+                "DS3&DS6&DS7&DS8&DS9" = shared_vars_VUDS[62, "Number"],
+                "VU&DS3&DS6&DS7&DS8&DS9" = shared_vars_VUDS[63, "Number"])
+
+### FIG. S5E - saved as 6x9 PDF
+upset(fromExpression(upset_VUDS), order.by = "freq", nsets = 6,
+      sets.bar.color = c("brown", "seagreen", "deeppink", "gold", "darkorchid", "blue"),
+      mb.ratio = c(0.55, 0.45), nintersects = NA,
+      show.numbers = "no", point.size = 5, line.size = 0.5, mainbar.y.max = 106000,
+      mainbar.y.label = "Number of Mutations", sets.x.label = "Set Size", set_size.scale_max = 160000,
+      text.scale = c(2, 1.5, 2, 1.5, 2, 1))
+
 
 # Circle plot of mean-centered mutation counts
 ## Clear other packages before running this code
@@ -159,12 +209,7 @@ muts_Chrom_named_center_CLV <- t(center_apply(muts_Chrom_named[,c("VU", "MGH", "
 muts_Chrom_named_center_melt_CLV <- melt(data = muts_Chrom_named_center_CLV,
                                          id.vars = rownames(muts_Chrom_named_center_CLV),
                                          measure.vars = c("VU", "MGH", "BR1"))
-#### Sublines excluding DS8
-muts_Chrom_named_center_sublines_noDS8 <- t(center_apply(muts_Chrom_named[,c("DS3", "DS6", "DS7", "DS9")]))
-muts_Chrom_named_center_melt_sublines_noDS8 <- melt(data = muts_Chrom_named_center_sublines_noDS8,
-                                              id.vars = rownames(muts_Chrom_named_center_sublines_noDS8),
-                                              measure.vars = c("DS3", "DS6", "DS7", "DS8", "DS9"))
-#### Sublines including DS8
+#### Sublines 
 muts_Chrom_named_center_sublines <- t(center_apply(muts_Chrom_named[,c("DS3", "DS6", "DS7", "DS8", "DS9")]))
 muts_Chrom_named_center_melt_sublines <- melt(data = muts_Chrom_named_center_sublines,
                                             id.vars = rownames(muts_Chrom_named_center_sublines),
@@ -238,77 +283,7 @@ ggplot(data_CLV, aes(x=as.factor(id), y=value, fill=population)) +
   scale_fill_manual(values = c("blue", "green", "red")) +
   ggsave("FIG_3A.pdf", width = 5, height = 5)
 
-### Creating the circle plot - Sublines without DS8
-empty_bar <- 3 # Used for spacing
-#### Set a number of 'empty bar' to add at the end of each group
-data_sublines_noDS8 <- muts_Chrom_named_center_melt_sublines_noDS8
-colnames(data_sublines_noDS8) <- c("group", "population", "value")
-to_add <- data.frame( matrix(NA, empty_bar*nlevels(data_sublines_noDS8$group), 
-                             ncol(data_sublines_noDS8)) )
-
-#### Add identifier label to dataframe
-colnames(to_add) <- colnames(data_sublines_noDS8)
-to_add$group <- rep(levels(data_sublines_noDS8$group), each=empty_bar)
-data_sublines_noDS8 <- rbind(data_sublines_noDS8, to_add)
-data_sublines_noDS8 <- data_sublines_noDS8 %>% arrange(group)
-data_sublines_noDS8$id <- seq(1, nrow(data_sublines_noDS8))
-
-# Get the name and the y position of each label
-label_data_sublines_noDS8 <- data_sublines_noDS8
-number_of_bar <- nrow(label_data_sublines_noDS8)
-angle <- 90 - 360 * (label_data_sublines_noDS8$id-0.5) /number_of_bar     # I substract 0.5 because the letter must have the angle of the center of the bars. Not extreme right(1) or extreme left (0)
-label_data_sublines_noDS8$hjust <- ifelse( angle < -90, 1, 0)
-label_data_sublines_noDS8$angle <- ifelse(angle < -90, angle+180, angle)
-
-# prepare a dataframe for base lines
-base_data_sublines_noDS8 <- data_sublines_noDS8 %>% 
-  group_by(group) %>% 
-  summarize(start=min(id), end=max(id) - empty_bar) %>% 
-  rowwise() %>% 
-  mutate(title=mean(c(start, end)))
-
-# prepare a dataframe for grid (scales)
-grid_data_sublines_noDS8 <- base_data_sublines_noDS8
-grid_data_sublines_noDS8$end <- grid_data_sublines_noDS8$end[ c( nrow(grid_data_sublines_noDS8), 
-                                                                 1:nrow(grid_data_sublines_noDS8)-1)] + 1
-grid_data_sublines_noDS8$start <- grid_data_sublines_noDS8$start - 1
-grid_data_sublines_noDS8 <- grid_data_sublines_noDS8[-1,]
-
-ggplot(data_sublines_noDS8, aes(x=as.factor(id), y=value, fill=population)) + 
-  geom_bar(aes(x=as.factor(id), y=value, fill=population), stat="identity", alpha=0.5) +
-  # Add reference lines
-  geom_segment(data=grid_data_sublines_noDS8, aes(x = end, y = -3000, xend = start, yend = 3000), 
-               colour = "black", alpha=1, size=0.3, inherit.aes = FALSE ) +
-  geom_segment(data=grid_data_sublines_noDS8, aes(x = end, y = -2000, xend = start, yend = -2000), 
-               colour = "black", alpha=1, size=0.3, inherit.aes = FALSE ) +
-  geom_segment(data=grid_data_sublines_noDS8, aes(x = end, y = -1000, xend = start, yend = -1000), 
-               colour = "black", alpha=1, size=0.3 , inherit.aes = FALSE ) +
-  geom_segment(data=grid_data_sublines_noDS8, aes(x = end, y = 0, xend = start, yend = 0), 
-               colour = "black", alpha=1, size=0.3 , inherit.aes = FALSE ) +
-  geom_segment(data=grid_data_sublines_noDS8, aes(x = end, y = 1000, xend = start, yend = 1000), 
-               colour = "black", alpha=1, size=0.3 , inherit.aes = FALSE ) +
-  # Add text showing the value of each lines
-  annotate("text", x = rep(max(data_sublines_noDS8$id),5), y = c(-3000, -2000, -1000, 0, 1000), 
-           label = c("-3000", "-2000", "-1000", "0", "1000") , 
-           color="black", size=3 , angle=0, fontface="bold", hjust=1) +
-  geom_bar(aes(x=as.factor(id), y=value, fill=population), 
-           color = "black", size = 0.25, stat="identity", alpha=0.5) +
-  ylim(-3000,1250) + theme_minimal() + coord_polar() + 
-  theme(
-    legend.position = "none",
-    axis.text = element_blank(),
-    axis.title = element_blank(),
-    panel.grid = element_blank(),
-    plot.margin = unit(rep(-1,4), "cm") 
-  ) +
-  
-  # Add base line information
-  geom_segment(data=base_data_sublines_noDS8, aes(x = start, y = 0, xend = end, yend = -5), colour = "black", alpha=0.8, size=0.6 , inherit.aes = FALSE )  +
-  geom_text(data=base_data_sublines_noDS8, aes(x = title, y = 1250, label=group), colour = "black", alpha=0.8, size=6, fontface="bold", inherit.aes = FALSE) +
-  scale_fill_manual(values = c("brown", "deeppink", "darkorchid", "gold")) +
-  ggsave("FIG_4A.pdf", width = 5, height = 5)
-
-### Creating the circle plot - Sublines with DS8
+### Creating the circle plot - Sublines 
 empty_bar <- 3 # Used for spacing
 #### Set a number of 'empty bar' to add at the end of each group
 data_sublines <- muts_Chrom_named_center_melt_sublines
@@ -376,7 +351,7 @@ ggplot(data_sublines, aes(x=as.factor(id), y=value, fill=population)) +
   geom_segment(data=base_data_sublines, aes(x = start, y = 0, xend = end, yend = -5), colour = "black", alpha=0.8, size=0.6 , inherit.aes = FALSE )  +
   geom_text(data=base_data_sublines, aes(x = title, y = 1250, label=group), colour = "black", alpha=0.8, size=6, fontface="bold", inherit.aes = FALSE) +
   scale_fill_manual(values = c("brown", "deeppink", "darkorchid", "seagreen", "gold")) +
-  ggsave("FIG_S10A.pdf", width = 5, height = 5)
+  ggsave("FIG_4A_REVISED.pdf", width = 5, height = 5)
 
 ### COV calculation from circle plots
 #### Remake dataframes by cohort for easy calculations
@@ -384,12 +359,6 @@ muts_Chrom_named_CLV <- apply(muts_Chrom_named[,c("VU", "MGH", "BR1")], 1, funct
 muts_Chrom_named_melt_CLV <- melt(data = muts_Chrom_named_CLV,
                                    id.vars = rownames(muts_Chrom_named_CLV),
                                    measure.vars = colnames(muts_Chrom_named_CLV))
-
-muts_Chrom_named_sublines_noDS8 <- apply(muts_Chrom_named[,c("DS3", "DS6", "DS7", "DS9")], 
-                                         1, function(y) y)
-muts_Chrom_named_melt_sublines_noDS8 <- melt(data = muts_Chrom_named_sublines_noDS8,
-                                             id.vars = rownames(muts_Chrom_named_sublines_noDS8),
-                                             measure.vars = colnames(muts_Chrom_named_sublines_noDS8))
 
 muts_Chrom_named_sublines <- apply(muts_Chrom_named[,c("DS3", "DS6", "DS7", "DS8", "DS9")], 
                                          1, function(y) y)
@@ -406,12 +375,9 @@ CV <- function(x){
 CLV_chromCVavg <- mean(aggregate(value ~ Var2, 
                                  data = muts_Chrom_named_melt_CLV, 
                                  FUN = CV)$value) # In FIG. 3A
-sublines_noDS8_chromCVavg <- mean(aggregate(value ~ Var2, 
-                                            data = muts_Chrom_named_melt_sublines_noDS8, 
-                                            FUN = CV)$value) # In FIG. 4A
 sublines_chromCVavg <- mean(aggregate(value ~ Var2, 
                                       data = muts_Chrom_named_melt_sublines, 
-                                      FUN = CV)$value) # For reference
+                                      FUN = CV)$value) # In revised FIG. 4A
 
 
 # Proportion and impact of unique mutations for each cohort
@@ -592,16 +558,17 @@ unique_prop_CLV <- data.frame(Population = c("BR1", "MGH", "VU"),
 unique_prop_CLV$Proportion <- unique_prop_CLV$Unique / unique_prop_CLV$Total
 
 ### Plot proportion of unique mutations in each CLV
-ggplot(unique_prop_CLV, aes(x = Population, y = Proportion, fill = Population)) +
+unique_prop_CLV$Population <- factor(unique_prop_CLV$Population,
+                                     levels = c("BR1", "MGH", "VU"))
+ggplot(unique_prop_CLV, aes(x = Population, y = Proportion, fill = Population)) + 
   geom_bar(stat = "identity", color = "black") + 
   theme_minimal() + labs(x = "Cell Line Version", y = "Proportion of Unique Mutations") +
-  scale_fill_manual(values = c("red", "green", "blue")) +
+  scale_fill_manual(values = c("VU" = "blue", "MGH" = "green", "BR1" = "red")) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        legend.position = "none", axis.title.x = element_blank(), axis.text.x = element_blank(),
-        axis.ticks.x = element_blank(), axis.line.y = element_line(),
-        plot.title = element_text(size = 12, hjust = 0.5), axis.text=element_text(size=12),
-        legend.title = element_text(size=12), axis.title=element_text(size=12)) +
-  ggsave("FIG_3B.pdf", width = 6, height = 3)
+        axis.line.y = element_line(), axis.title = element_text(size = 14),
+        axis.text = element_text(size = 14), legend.position = "none",
+        axis.title.x = element_blank(), axis.text.x = element_blank()) +
+ggsave("FIG_3B_REVISION.pdf", width = 6, height = 3)
 
 ### Calculate the number of unique mutations different impact scores 
 impact_VU <- dplyr::mutate(melt(table(test_s1_dedup$Impact)), prop = value / sum(value))
@@ -616,17 +583,20 @@ impact_CLV$pop <- rep(c("VU", "MGH", "BR1"), each = 4)
 colnames(impact_CLV) <- c("Risk", "Count", "Proportion", "Population")
 impact_CLV_risky <- impact_CLV[!(impact_CLV$Risk == "MODIFIER"),]
 
-ggplot(impact_CLV_risky, aes(x = Population, y = Count, 
-                              fill = factor(Risk, levels = c("HIGH", "MODERATE", "LOW")))) + 
+impact_CLV_risky$Population <- factor(impact_CLV_risky$Population,
+                                      levels = c("BR1", "MGH", "VU"))
+impact_CLV_risky$Risk <- factor(impact_CLV_risky$Risk,
+                                levels = c("HIGH", "MODERATE", "LOW"))
+ggplot(impact_CLV_risky, aes(x = Population, y = Count, fill = Risk)) +
   geom_bar(stat = "identity", color = "black") + 
-  theme_classic() + labs(x = "Cell Line Version", y = "Number of IMPACT Mutations") +
-  scale_fill_manual(values = c("red", "orange", "yellow"), name = "Risk") +
+  theme_classic() + labs(x = "Subline", y = "Number of IMPACT Mutations") +
+  scale_fill_manual(values = c("HIGH" = "red", "MODERATE" = "orange", "LOW" = "yellow"), 
+                    name = "Risk") +
   theme(
     panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-    legend.position = "none", 
-    plot.title = element_text(size = 12, hjust = 0.5), axis.text=element_text(size=12),
-    legend.title = element_text(size=12), axis.title=element_text(size=12)) +
-  ggsave("FIG_3C.pdf", width = 6, height = 3)
+    legend.position = "none", axis.text=element_text(size=14),
+    axis.title=element_text(size=14)) +
+  ggsave("FIG_3C_REVISION.pdf", width = 6, height = 3)
 
 
 ## Plot unique impact mutations and proportions - sublines without DS8
@@ -689,20 +659,20 @@ unique_prop_sublines <- data.frame(Population = c("DS3", "DS6", "DS7", "DS8", "D
 unique_prop_sublines$Proportion <- unique_prop_sublines$Unique / unique_prop_sublines$Total
 
 #### Highlight DS8
-unique_prop_sublines$tint <- c(0.3, 0.3, 0.3, 1, 0.3)
+# unique_prop_sublines$tint <- c(0.3, 0.3, 0.3, 1, 0.3)
 
 ggplot(unique_prop_sublines, aes(x = factor(Population, levels = c("DS3", "DS6", "DS7", "DS9", "DS8")), 
-                                 y = Proportion, fill = Population, alpha = tint)) +
+                                 y = Proportion, fill = Population)) + 
   geom_bar(stat = "identity", color = "black") + 
   theme_minimal() + labs(x = "Subline", y = "Proportion of Unique Mutations") +
   scale_fill_manual(values = c("brown", "deeppink", "darkorchid", "seagreen", "gold")) +
-  scale_alpha_continuous(range = c(0.3, 1)) +
+  # scale_alpha_continuous(range = c(0.3, 1)) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        legend.position = "none", axis.title.x = element_blank(), axis.text.x = element_blank(),
-        axis.ticks.x = element_blank(), axis.line.y = element_line(),
-        plot.title = element_text(size = 12, hjust = 0.5), axis.text=element_text(size=12),
-        legend.title = element_text(size=12), axis.title=element_text(size=12)) +
-  ggsave("FIG_6A.pdf", width = 6, height = 3)
+        axis.line.y = element_line(), axis.title = element_text(size = 14),
+        axis.text = element_text(size = 14), legend.position = "none",
+        axis.title.x = element_blank(), axis.text.x = element_blank()) 
+  ggsave("FIG_4B_REVISION.pdf", width = 6, height = 3)
+
 
 impact_DS3 <- dplyr::mutate(melt(table(test_s4_dedup$Impact)), prop = value / sum(value))
 impact_DS6 <- dplyr::mutate(melt(table(test_s5_dedup$Impact)), prop = value / sum(value))
@@ -716,23 +686,20 @@ colnames(impact_clones) <- c("Risk", "Count", "Proportion", "Population")
 impact_clones_risky <- impact_clones[!(impact_clones$Risk == "MODIFIER"),]
 
 #### Highlight DS8
-impact_clones_risky$tint <- rep(c(0.3, 0.3, 0.3, 1, 0.3), each = 3)
+# impact_clones_risky$tint <- rep(c(0.3, 0.3, 0.3, 1, 0.3), each = 3)
 
 ggplot(impact_clones_risky, aes(x = factor(Population, 
                                            levels = c("DS3", "DS6", "DS7", "DS9", "DS8")),
                                 y = Count, 
-                                fill=factor(Risk, levels = c("HIGH", "MODERATE", "LOW")),
-                                alpha = tint)) +
+                                fill=factor(Risk, levels = c("HIGH", "MODERATE", "LOW")))) +
   geom_bar(stat = "identity", color = "black") + 
   theme_classic() + labs(x = "Subline", y = "Number of IMPACT Mutations") +
   scale_fill_manual(values = c("red", "orange", "yellow"), name = "Risk") +
-  scale_alpha_continuous(range = c(0.3, 1)) +
   theme(
     panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-    legend.position = "none",
-    plot.title = element_text(size = 12, hjust = 0.5), axis.text=element_text(size=12),
-    legend.title = element_text(size=12), axis.title=element_text(size=12)) +
-  ggsave("FIG_6B.pdf", width = 6, height = 3)
+    legend.position = "none", axis.text=element_text(size=14),
+    axis.title=element_text(size=14)) +
+  ggsave("FIG_4C_REVISION.pdf", width = 6, height = 3)
 
 # Calculate mutation class proportion
 ## Function to calculate the proportion of mutation classes in a pie chart

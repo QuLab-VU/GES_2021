@@ -1,4 +1,4 @@
-setwd("~/Documents/QuarantaLab/GES_2020/Joint_functions/")
+setwd("~/git/GES_2020/Joint_functions/")
 source("SumSE.R") # Summarize function to get the summary statistics
 source("../DrugResponse/functionsDRC.R") # Several functions for drug-response data
 
@@ -11,6 +11,8 @@ library(readxl)
 require(ggplot2)
 require(Hmisc)
 library(plyr)
+library(ggpubr)
+library(reshape2)
 
 # ============================================================================================================
 # ============================================================================================================
@@ -232,25 +234,6 @@ n_DF_all <- data.frame(Line = c("PC9-VU", "PC9-MGH", "PC9-BR1", "DS1",
                                paste("n =", as.character(length(unique(subset(cFP_all, Line == "DS8")$variable)))),
                                paste("n =", as.character(length(unique(subset(cFP_all, Line == "DS9")$variable))))))
 
-# DIP rate linear fit plots (normalized to ~48h)
-ggplot(data = cFP_all, aes(x=Time, y=nl2, group = variable, color = Line)) +
-  geom_line(stat="smooth",method = "lm", size = 1, alpha = 0.25) +
-  labs(x = "Time (hours) Post Drug Penetrance", y = "Normalized Log2 Cell Count") +
-  facet_wrap(.~Line, ncol = 5) +
-  geom_text(data = n_DF_all,
-            aes(x = 40, y = -2.9, label = label),
-            inherit.aes=FALSE, parse = FALSE, size = 5) +
-  scale_color_manual(values = cols_all,
-                     labels = labs_all) +
-  theme_bw() +
-  theme(
-    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-    legend.position = "none",
-    plot.title = element_text(size = 14, hjust = 0.5, face = "bold"), axis.text=element_text(size=14),
-    legend.title = element_text(size=14), axis.title=element_text(size=14),
-    strip.text = element_text(size = 14)
-    ) +
-  ggsave("FIG_S3B.pdf", width = 10, height = 6)
 
 ###################################################
 ### END OF 48h normalization
@@ -437,24 +420,6 @@ cFP_all <- rbind(VU_exp, MGH_exp, BR1_exp, DS1_exp, DS3_exp,
 
 
 # Plots for cell line version experimental trajectories (not included elsewhere)
-## PC9-MGH
-ggplot(data = MGH_exp, aes(x=Time, y=nl2, group = variable, color = Line)) +
-  geom_line(size = 0.5, alpha = 0.25) +
-  labs(x = "Time (hours) Post Drug Penetrance", y = "Normalized Log2 Cell Count") +
-  geom_text(data = subset(n_DF_all, Line == "PC9-MGH"),
-            aes(x = 30, y = -2.9, label = label),
-            inherit.aes=FALSE, parse = FALSE, size = 5) +
-  scale_color_manual(values = cols_all,
-                     labels = labs_all) +
-  theme_bw() +
-  theme(
-    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-    legend.position = "none",
-    plot.title = element_text(size = 14, hjust = 0.5, face = "bold"), axis.text=element_text(size=14),
-    legend.title = element_text(size=14), axis.title=element_text(size=14),
-    strip.text = element_text(size = 14)) +
-  ggsave("FIG_S3D.pdf", width = 5, height = 4)
-
 ## PC9-BR1
 ggplot(data = BR1_exp, aes(x=Time, y=nl2, group = variable, color = Line)) +
   geom_line(size = 0.5, alpha = 0.25) +
@@ -472,7 +437,26 @@ ggplot(data = BR1_exp, aes(x=Time, y=nl2, group = variable, color = Line)) +
     plot.title = element_text(size = 14, hjust = 0.5, face = "bold"), axis.text=element_text(size=14),
     legend.title = element_text(size=14), axis.title=element_text(size=14),
     strip.text = element_text(size = 14)) +
-  ggsave("FIG_S3E.pdf", width = 5, height = 4)
+  ggsave("FIG_S2A.pdf", width = 5, height = 4)
+
+## PC9-MGH
+ggplot(data = MGH_exp, aes(x=Time, y=nl2, group = variable, color = Line)) +
+  geom_line(size = 0.5, alpha = 0.25) +
+  labs(x = "Time (hours) Post Drug Penetrance", y = "Normalized Log2 Cell Count") +
+  geom_text(data = subset(n_DF_all, Line == "PC9-MGH"),
+            aes(x = 30, y = -2.9, label = label),
+            inherit.aes=FALSE, parse = FALSE, size = 5) +
+  scale_color_manual(values = cols_all,
+                     labels = labs_all) +
+  theme_bw() +
+  theme(
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    legend.position = "none",
+    plot.title = element_text(size = 14, hjust = 0.5, face = "bold"), axis.text=element_text(size=14),
+    legend.title = element_text(size=14), axis.title=element_text(size=14),
+    strip.text = element_text(size = 14)) +
+  ggsave("FIG_S2B.pdf", width = 5, height = 4)
+
 
 # Plot of VU cFP trajectories (grey) with DS lines population response inside (colors) 
 ## Load population trajectories from DrugResponse.R script
@@ -521,17 +505,18 @@ ggplot(VU_exp, aes(x=Time, y=nl2, group=variable)) +
     legend.position = "right",
     plot.title = element_text(size = 16, hjust = 0.5, face = "bold"), axis.text=element_text(size=12),
     legend.title = element_text(size=12), axis.title=element_text(size=12)) +
-  ggsave("FIG_S4A.pdf", width = 6.5, height = 4.5)
+  ggsave("FIG_S2C.pdf", width = 6.5, height = 4.5)
 
 
 #############################################################################
 ### Comparison of experimental (cFP) and simulated (MGM, PGM) trajectories
-### DS3 and DS4 - FIG. 5
+### DS3 and DS4 - FIG. 5A-C
+### Use 48 hour normalization
 #############################################################################
 
 # Pulling and cleaning model simulation data
-setwd("~/git/GES_2020/cFP/")
-DS1_trajs <- read.csv('trajectories_DS1_G50.csv', row.names = 1)
+setwd("~/git/GES_2020/cFP")
+DS1_trajs <- read.csv('trajectories_DS1_G50_REVISION.csv', row.names = 1)
 DS1_trajs <- DS1_trajs[,colSums(is.na(DS1_trajs))<nrow(DS1_trajs)]
 names(DS1_trajs) <- seq(ncol(DS1_trajs))
 DS1_trajs$Time <- seq(nrow(DS1_trajs)) -1
@@ -540,7 +525,7 @@ DS1_trajs$Line <- "DS1"
 DS1_trajs$Type <- "Simulation"
 DS1_trajs <- subset(DS1_trajs, Time %in% DS1_times)
 
-DS3_trajs <- read.csv('trajectories_DS3_G50.csv', row.names = 1)
+DS3_trajs <- read.csv('trajectories_DS3_G50_REVISION.csv', row.names = 1)
 DS3_trajs <- DS3_trajs[,colSums(is.na(DS3_trajs))<nrow(DS3_trajs)]
 names(DS3_trajs) <- seq(ncol(DS3_trajs))
 DS3_trajs$Time <- seq(nrow(DS3_trajs)) -1
@@ -549,7 +534,7 @@ DS3_trajs$Line <- "DS3"
 DS3_trajs$Type <- "Simulation"
 DS3_trajs <- subset(DS3_trajs, Time %in% DS3_times)
 
-DS4_trajs <- read.csv('trajectories_DS4_G50.csv', row.names = 1)
+DS4_trajs <- read.csv('trajectories_DS4_G50_REVISION.csv', row.names = 1)
 DS4_trajs <- DS4_trajs[,colSums(is.na(DS4_trajs))<nrow(DS4_trajs)]
 names(DS4_trajs) <- seq(ncol(DS4_trajs))
 DS4_trajs$Time <- seq(nrow(DS4_trajs)) -1
@@ -558,7 +543,7 @@ DS4_trajs$Line <- "DS4"
 DS4_trajs$Type <- "Simulation"
 DS4_trajs <- subset(DS4_trajs, Time %in% DS4_times)
 
-DS6_trajs <- read.csv('trajectories_DS6_G50.csv', row.names = 1)
+DS6_trajs <- read.csv('trajectories_DS6_G50_REVISION.csv', row.names = 1)
 DS6_trajs <- DS6_trajs[,colSums(is.na(DS6_trajs))<nrow(DS6_trajs)]
 names(DS6_trajs) <- seq(ncol(DS6_trajs))
 DS6_trajs$Time <- seq(nrow(DS6_trajs)) -1
@@ -567,7 +552,7 @@ DS6_trajs$Line <- "DS6"
 DS6_trajs$Type <- "Simulation"
 DS6_trajs <- subset(DS6_trajs, Time %in% DS6_times)
 
-DS7_trajs <- read.csv('trajectories_DS7_G50.csv', row.names = 1)
+DS7_trajs <- read.csv('trajectories_DS7_G50_REVISION.csv', row.names = 1)
 DS7_trajs <- DS7_trajs[,colSums(is.na(DS7_trajs))<nrow(DS7_trajs)]
 names(DS7_trajs) <- seq(ncol(DS7_trajs))
 DS7_trajs$Time <- seq(nrow(DS7_trajs)) -1
@@ -576,7 +561,7 @@ DS7_trajs$Line <- "DS7"
 DS7_trajs$Type <- "Simulation"
 DS7_trajs <- subset(DS7_trajs, Time %in% DS7_times)
 
-DS8_trajs <- read.csv('trajectories_DS8_G50.csv', row.names = 1)
+DS8_trajs <- read.csv('trajectories_DS8_G50_REVISION.csv', row.names = 1)
 DS8_trajs <- DS8_trajs[,colSums(is.na(DS8_trajs))<nrow(DS8_trajs)]
 names(DS8_trajs) <- seq(ncol(DS8_trajs))
 DS8_trajs$Time <- seq(nrow(DS8_trajs)) -1
@@ -585,7 +570,7 @@ DS8_trajs$Line <- "DS8"
 DS8_trajs$Type <- "Simulation"
 DS8_trajs <- subset(DS8_trajs, Time %in% DS8_times)
 
-DS9_trajs <- read.csv('trajectories_DS9_G50.csv', row.names = 1)
+DS9_trajs <- read.csv('trajectories_DS9_G50_REVISION.csv', row.names = 1)
 DS9_trajs <- DS9_trajs[,colSums(is.na(DS9_trajs))<nrow(DS9_trajs)]
 names(DS9_trajs) <- seq(ncol(DS9_trajs))
 DS9_trajs$Time <- seq(nrow(DS9_trajs)) -1
@@ -645,16 +630,16 @@ ggplot(data = DS3_4_exp, aes(x=Time, y=nl2, group = variable, color = Line)) +
     plot.title = element_text(size = 14, hjust = 0.5, face = "bold"), axis.text=element_text(size=14),
     legend.title = element_text(size=14), axis.title=element_text(size=14),
     strip.text = element_text(size = 14)) +
-  ggsave("FIG_5A.pdf", width = 5, height = 8)
+  ggsave("FIG_5A_REVISION.pdf", width = 5, height = 8)
 
 # Create model simulation division and death rate dataframe
 ## Annotations in plot
 kdiv_DF_DS3_4 <- data.frame(Line = c("DS3", "DS4"),
-                            label=c(paste("k[division] == 0.030"),
-                                    paste("k[division] == 0.035"))) 
+                            label=c(paste("k[division] == 0.018"),
+                                    paste("k[division] == 0.021"))) 
 kdth_DF_DS3_4 <- data.frame(Line = c("DS3", "DS4"),
-                            label=c(paste("k[death] == 0.03075"),
-                                    paste("k[death] == 0.03175")))
+                            label=c(paste("k[death] == 0.0185"),
+                                    paste("k[death] == 0.0178")))
 
 # Plot simulated trajectories (DS3, DS4)
 ggplot(data = DS3_4_sim, aes(x=Time, y=nl2, group = variable, color = Line)) +
@@ -678,10 +663,10 @@ ggplot(data = DS3_4_sim, aes(x=Time, y=nl2, group = variable, color = Line)) +
     plot.title = element_text(size = 14, hjust = 0.5, face = "bold"), axis.text=element_text(size=14),
     legend.title = element_text(size=14), axis.title=element_text(size=14),
     strip.text = element_text(size = 14)) +
-  ggsave("FIG_5B.pdf", width = 5, height = 8)
+  ggsave("FIG_5B_REVISION.pdf", width = 5, height = 8)
 
 # Load simulated distribution data (calculated from trajectories ploted above)
-DS3_4_distribution <- read.csv("distributions_G50.csv", row.names = 1)[,c(2,3)]
+DS3_4_distribution <- read.csv("distributions_G50_REVISION.csv", row.names = 1)[,c(2,3)]
 DS3_4_distribution <- melt(DS3_4_distribution)
 names(DS3_4_distribution) <- c("Line", "DIP")
 DS3_4_distribution$Type = "Simulated"
@@ -693,16 +678,28 @@ DS3_4_distribution_exp$Type = "Experimental"
 # Combine dataframes
 DS3_4_distribution_data <- rbind(DS3_4_distribution, DS3_4_distribution_exp)
 
-# Load p-values (K-S test, see model code) for distribution comparison 
-pvalues <- read.csv("pvalues_G50.csv", row.names = 1)
-p_DF_DS3_4 <- data.frame(Line = c("DS3", "DS4"),
-                         label=c(paste("p =", as.character(round(pvalues["DS3"],3))),
-                                 paste("p =", as.character(round(pvalues["DS4"],3)))))
+# Load p-values (K-S test, see model code) for distribution comparison
+## KS test
+KS_pvalues <- read.csv("KSbootstrap_G50_REVISION.csv", row.names = 1)
+pKS_DF_DS3_4 <- data.frame(Line = c("DS3", "DS4"),
+                           label=c(paste("p =", as.character(round(mean(KS_pvalues$DS3),2)),
+                                         "±", as.character(round(sd(KS_pvalues$DS3),2))),
+                                   paste("p =", as.character(round(mean(KS_pvalues$DS4),2)),
+                                         "±", as.character(round(sd(KS_pvalues$DS4),2)))))
 
+## AD test
+AD_pvalues <- read.csv("ADbootstrap_G50_REVISION.csv", row.names = 1)
+pAD_DF_DS3_4 <- data.frame(Line = c("DS3", "DS4"),
+                           label=c(paste("p =", as.character(round(mean(AD_pvalues$DS3),2)),
+                                         "±", as.character(round(sd(AD_pvalues$DS3),2))),
+                                   paste("p =", as.character(round(mean(AD_pvalues$DS4),2)),
+                                         "±", as.character(round(sd(AD_pvalues$DS4),2)))))
 
-DS3_4_plot <- ggplot(DS3_4_distribution, aes(x=DIP, fill=Line, color=Line)) +
-  geom_density(alpha=.25, size = 0.5) +  
-  geom_density(data = DS3_4_distribution_exp, aes(x=DIP), 
+DS3_4_plot <- ggplot() +
+  facet_wrap(.~Line, ncol = 1) + xlim(-0.025, 0.020) +
+  geom_density(data = DS3_4_distribution, aes(x=DIP, fill=Line, color=Line), 
+               alpha=.25, size = 0.5) +  
+  geom_density(data = DS3_4_distribution_exp, aes(x=DIP, fill=Line, color=Line), 
                fill = "grey90", color = "grey10",
                alpha=0.75, size = 0.5) +
   theme_bw() +
@@ -711,8 +708,7 @@ DS3_4_plot <- ggplot(DS3_4_distribution, aes(x=DIP, fill=Line, color=Line)) +
   geom_vline(xintercept = 0, size = 0.5, colour = "black",
              linetype = "dashed") +
   labs(x = "DIP Rate", y = "Density") + 
-  facet_wrap(.~Line, ncol = 1) + xlim(-0.025, 0.020) +
-  geom_text(data= p_DF,
+  geom_text(data= pAD_DF_DS3_4,
             aes(x = -0.015,y = 125, label = label), 
             inherit.aes=FALSE, parse = FALSE, size = 5) +
   theme(
@@ -722,16 +718,15 @@ DS3_4_plot <- ggplot(DS3_4_distribution, aes(x=DIP, fill=Line, color=Line)) +
     legend.title = element_text(size=14), axis.title=element_text(size=14),
     strip.text = element_text(size = 14)) 
 
-DS3_4_plot + ggsave("FIG_5C.pdf", width = 5, height = 8)
+DS3_4_plot + ggsave("FIG_5C_REVISION.pdf", width = 5, height = 8)
 
 ###################################
 ### Plot different subset
-### DS1/6/7/9 - FIG. 9
+### DS1/6/7/9 - FIG. S12
 ###################################
 
 # Combine experimental (cFP) and model (simulated) trajectories
 ## DS1/6/7/9 
-## FIG S9
 DS1_6_7_9_data <- rbind(DS1_trajs, DS6_trajs, DS7_trajs, DS9_trajs,
                         DS1_exp, DS6_exp, DS7_exp, DS9_exp)
 
@@ -761,20 +756,20 @@ ggplot(data = DS1_6_7_9_exp, aes(x=Time, y=nl2, group = variable, color = Line))
     plot.title = element_text(size = 14, hjust = 0.5, face = "bold"), axis.text=element_text(size=14),
     legend.title = element_text(size=14), axis.title=element_text(size=14),
     strip.text = element_text(size = 14)) +
-  ggsave("FIG_S9A.pdf", width = 5, height = 16)
+  ggsave("FIG_S12A_REVISION.pdf", width = 5, height = 16)
 
 # Division and death rates associated with example simulations
 ## Annotated on model plots
 kdiv_DF_DS1_6_7_9 <- data.frame(Line = c("DS1", "DS6", "DS7", "DS9"),
-                                label=c(paste("k[division] == 0.032"),
-                                        paste("k[division] == 0.030"),
+                                label=c(paste("k[division] == 0.017"),
                                         paste("k[division] == 0.028"),
-                                        paste("k[division] == 0.025"))) 
+                                        paste("k[division] == 0.016"),
+                                        paste("k[division] == 0.014"))) 
 kdth_DF_DS1_6_7_9 <- data.frame(Line = c("DS1", "DS6", "DS7", "DS9"),
-                                label=c(paste("k[death] == 0.03050"),
-                                        paste("k[death] == 0.02940"),
-                                        paste("k[death] == 0.02625"),
-                                        paste("k[death] == 0.02375")))
+                                label=c(paste("k[death] == 0.0156"),
+                                        paste("k[death] == 0.0273"),
+                                        paste("k[death] == 0.0141"),
+                                        paste("k[death] == 0.0130")))
 
 # Plot simulated data (colored by subline)
 ggplot(data = DS1_6_7_9_sim, aes(x=Time, y=nl2, group = variable, color = Line)) +
@@ -798,7 +793,7 @@ ggplot(data = DS1_6_7_9_sim, aes(x=Time, y=nl2, group = variable, color = Line))
     plot.title = element_text(size = 14, hjust = 0.5, face = "bold"), axis.text=element_text(size=14),
     legend.title = element_text(size=14), axis.title=element_text(size=14),
     strip.text = element_text(size = 14)) +
-  ggsave("FIG_S9B.pdf", width = 5, height = 16)
+  ggsave("FIG_S12B_REVISION.pdf", width = 5, height = 16)
 
 # Load simulated distribution data (calculated from trajectories ploted above)
 DS1_6_7_9_distribution <- read.csv("distributions_G50.csv", row.names = 1)[,c(1,4,5,6)]
@@ -813,16 +808,33 @@ DS1_6_7_9_distribution_exp$Type = "Experimental"
 # Combine experimental (cFP) and simulated (model) distribution data
 DS1_6_7_9_distribution_data <- rbind(DS1_6_7_9_distribution, DS1_6_7_9_distribution_exp)
 
-# Grab p-values from cohort subline experimental and simulated distributions
-p_DF_DS1_6_7_9 <- data.frame(Line = c("DS1", "DS6", "DS7", "DS9"),
-                             label=c(paste("p =", as.character(round(pvalues["DS1"],3))),
-                                     paste("p =", as.character(round(pvalues["DS6"],3))),
-                                     paste("p =", as.character(round(pvalues["DS7"],3))),
-                                     paste("p =", as.character(round(pvalues["DS9"],3)))))
+## KS test
+pKS_DF_DS1_6_7_9 <- data.frame(Line = c("DS1", "DS6", "DS7", "DS9"),
+                               label=c(paste("p =", as.character(round(mean(KS_pvalues$DS1),2)),
+                                             "±", as.character(round(sd(KS_pvalues$DS1),2))),
+                                       paste("p =", as.character(round(mean(KS_pvalues$DS6),2)),
+                                             "±", as.character(round(sd(KS_pvalues$DS6),2))),
+                                       paste("p =", as.character(round(mean(KS_pvalues$DS7),2)),
+                                             "±", as.character(round(sd(KS_pvalues$DS7),2))),
+                                       paste("p =", as.character(round(mean(KS_pvalues$DS9),2)),
+                                             "±", as.character(round(sd(KS_pvalues$DS9),2)))))
+
+## AD test
+pAD_DF_DS1_6_7_9 <- data.frame(Line = c("DS1", "DS6", "DS7", "DS9"),
+                               label=c(paste("p =", as.character(round(mean(AD_pvalues$DS1),2)),
+                                             "±", as.character(round(sd(AD_pvalues$DS1),2))),
+                                       paste("p =", as.character(round(mean(AD_pvalues$DS6),2)),
+                                             "±", as.character(round(sd(AD_pvalues$DS6),2))),
+                                       paste("p =", as.character(round(mean(AD_pvalues$DS7),2)),
+                                             "±", as.character(round(sd(AD_pvalues$DS7),2))),
+                                       paste("p =", as.character(round(mean(AD_pvalues$DS9),2)),
+                                             "±", as.character(round(sd(AD_pvalues$DS9),2)))))
 
 # Plot experimental and simulated distribution comparisons
-DS1_6_7_9_plot <- ggplot(DS1_6_7_9_distribution, aes(x=DIP, fill=Line, color=Line)) +
-  geom_density(alpha=.25, size = 0.5) +  
+DS1_6_7_9_plot <- ggplot() +
+  facet_wrap(.~Line, ncol = 1) +
+  geom_density(data = DS1_6_7_9_distribution, aes(x=DIP, fill=Line, color=Line),
+               alpha=.25, size = 0.5) +  
   geom_density(data = DS1_6_7_9_distribution_exp, aes(x=DIP), 
                fill = "grey90", color = "grey10",
                alpha=0.75, size = 0.5) +
@@ -832,8 +844,7 @@ DS1_6_7_9_plot <- ggplot(DS1_6_7_9_distribution, aes(x=DIP, fill=Line, color=Lin
   geom_vline(xintercept = 0, size = 0.5, colour = "black",
              linetype = "dashed") +
   labs(x = "DIP Rate", y = "Density")+ xlim(-0.025, 0.020) +
-  facet_wrap(.~Line, ncol = 1) +
-  geom_text(data= p_DF_DS1_6_7_9,
+  geom_text(data= pAD_DF_DS1_6_7_9,
             aes(x = -0.015,y = 125, label = label), 
             inherit.aes=FALSE, parse = FALSE, size = 5) +
   theme(
@@ -843,23 +854,22 @@ DS1_6_7_9_plot <- ggplot(DS1_6_7_9_distribution, aes(x=DIP, fill=Line, color=Lin
     legend.title = element_text(size=14), axis.title=element_text(size=14),
     strip.text = element_text(size = 14))
 
-DS1_6_7_9_plot + ggsave("FIG_S9C.pdf", width = 5, height = 16)
+DS1_6_7_9_plot + ggsave("FIG_S12C_REVISION.pdf", width = 5, height = 16)
 
 ###################################
 ### Plot different subset
-### DS8 - FIG. 10E
+### DS8 - FIG. 5 (E-G)
 ###################################
 
 # Plot experimental cFP trajectories for DS8
 ggplot(data = DS8_exp, aes(x=Time, y=nl2, group = variable, color = Line)) +
   geom_line(size = 0.5, alpha = 0.25) +
   labs(x = "Time (hours) Post Drug Penetrance", y = "Normalized Log2 Cell Count") +
-  facet_wrap(.~Line, ncol = 1) +
   geom_text(data = subset(n_DF_all, Line == "DS8"),
-            aes(x = 100, y = 2, label = label),
+            aes(x = 25, y = 2, label = label),
             inherit.aes=FALSE, parse = FALSE, size = 5) +
   scale_color_manual(values = c("grey")) +
-  ylim(-2.5,2.5) +
+  ylim(-2.5,2.7) +
   theme_bw() +
   theme(
     panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
@@ -867,17 +877,17 @@ ggplot(data = DS8_exp, aes(x=Time, y=nl2, group = variable, color = Line)) +
     plot.title = element_text(size = 14, hjust = 0.5, face = "bold"), axis.text=element_text(size=14),
     legend.title = element_text(size=14), axis.title=element_text(size=14),
     strip.text = element_text(size = 14)) +
-  ggsave("FIG_S10E_top.pdf", width = 5, height = 4)
+  ggsave("FIG_5E_REVISION.pdf", width = 4, height = 4)
 
 # Add division and death rate information (PGM, 2 division and death rates) for DS8
 kdiv1_DF <- data.frame(Line = c("DS8"),
-                       label=c(paste("k[division] == 0.032"))) 
+                       label=c(paste("k[division] == 0.022"))) 
 kdiv2_DF <- data.frame(Line = c("DS8"),
-                       label=c(paste("k[division] == 0.033"))) 
+                       label=c(paste("k[division] == 0.024"))) 
 kdth1_DF <- data.frame(Line = c("DS8"),
-                       label=c(paste("k[death] == 0.0311"))) 
+                       label=c(paste("k[death] == 0.0211"))) 
 kdth2_DF <- data.frame(Line = c("DS8"),
-                       label=c(paste("k[death] == 0.0265"))) 
+                       label=c(paste("k[death] == 0.0169"))) 
 
 # Plot DS8 (PGM) simulated trajectories
 ggplot(data = DS8_trajs, aes(x=Time, y=nl2, group = variable, color = Line)) +
@@ -908,10 +918,10 @@ ggplot(data = DS8_trajs, aes(x=Time, y=nl2, group = variable, color = Line)) +
     plot.title = element_text(size = 14, hjust = 0.5, face = "bold"), axis.text=element_text(size=14),
     legend.title = element_text(size=14), axis.title=element_text(size=14),
     strip.text = element_text(size = 14)) +
-  ggsave("FIG_S10E_bottom.pdf", width = 5, height = 4)
+  ggsave("FIG_5F_REVISION.pdf", width = 4, height = 4)
 
 # Load in simulated DS8 DIP rate distribution information
-DS8_distribution <- read.csv("distributions_DS8_G50.csv", row.names = 1)[,c(1)]
+DS8_distribution <- read.csv("distributions_DS8_G50_REVISION.csv", row.names = 1)[,c(1)]
 DS8_distribution <- as.data.frame(DS8_distribution)
 DS8_distribution$Line <- "DS8"
 DS8_distribution$Type = "Simulated"
@@ -924,9 +934,17 @@ DS8_distribution_exp$Type = "Experimental"
 # Combine experimental and simulated data into common dataframe
 DS8_distribution_data <- rbind(DS8_distribution, DS8_distribution_exp)
 
-# Associated p-value from example simulated and experimental comparison
-p_DF_DS8 <- data.frame(Subline = c("DS8"),
-                       label=c(paste("p =", as.character(round(0.3098197140751014,3)))))
+## KS test
+KS_pvalues_DS8 <- read.csv("KSbootstrap_DS8_G50_REVISION.csv", row.names = 1)
+pKS_DF_DS8 <- data.frame(Line = c("DS8"),
+                         label=c(paste("p =", as.character(round(mean(KS_pvalues_DS8$DS8),2)),
+                                       "±", as.character(round(sd(KS_pvalues_DS8$DS8),2)))))
+
+## AD test
+AD_pvalues_DS8 <- read.csv("ADbootstrap_DS8_G50_REVISION.csv", row.names = 1)
+pAD_DF_DS8 <- data.frame(Line = c("DS8"),
+                         label=c(paste("p =", as.character(round(mean(AD_pvalues_DS8$DS8),2)),
+                                       "±", as.character(round(sd(AD_pvalues_DS8$DS8),2)))))
 
 
 ggplot(DS8_distribution, aes(x=DIP, fill=Line, color=Line)) +
@@ -941,7 +959,7 @@ ggplot(DS8_distribution, aes(x=DIP, fill=Line, color=Line)) +
              linetype = "dashed") +
   labs(x = "DIP Rate", y = "Density")+ xlim(-0.025, 0.020) + ylim(0,210) +
   # facet_grid(.~Sample) +
-  geom_text(data= p_DF_DS8,
+  geom_text(data= pAD_DF_DS8,
             aes(x = -0.015,y = 125, label = label), 
             inherit.aes=FALSE, parse = FALSE, size = 5) +
   theme(
@@ -950,12 +968,12 @@ ggplot(DS8_distribution, aes(x=DIP, fill=Line, color=Line)) +
     plot.title = element_text(size = 14, hjust = 0.5, face = "bold"), axis.text=element_text(size=14),
     legend.title = element_text(size=14), axis.title=element_text(size=14),
     strip.text = element_text(size = 14)) +
-  ggsave("FIG_6F.pdf", width = 5, height = 4)
+  ggsave("FIG_5G_REVISION.pdf", width = 6, height = 4)
 
 
 ################################################################
 ### Plotting cohort DIP rate distribution comparisons
-### Cell Line Versions, Sublines
+### Cell Line Versions, Sublines - FIGS. 2B and 2D
 ################################################################
 
 # Establish cell line version (CLV) cohort
@@ -965,22 +983,26 @@ CLV = c("PC9-VU", "PC9-MGH", "PC9-BR1")
 CLV_DIP = subset(DIPfits, DIPfits$Line%in%CLV)
 
 # CLV DIP rate distribution plotting
-ggplot(CLV_DIP, aes(x=DIP, fill=Line, colour=Line)) +
-  geom_density(alpha=.5, size = 1.5)+
+plt_CLV_cFP <- ggplot(CLV_DIP, aes(x=DIP, fill=Line, colour=Line)) +
+  geom_density(alpha=.5, size = 1)+
   geom_vline(xintercept = 0, size = 1, colour = "black",
              linetype = "dashed") +
   theme_bw() + xlim(-0.03, 0.05) +
   labs(x = "DIP Rate", y = "Density")+
   scale_color_manual(values = c("red", "green", "blue"),
-                     labels = c("BR1", "MGH", "VU")) +
+                     labels = c("PC9-BR1", "PC9-MGH", "PC9-VU")) +
   scale_fill_manual(values = c("red", "green", "blue"),
-                    labels = c("BR1", "MGH", "VU")) +
+                    labels = c("PC9-BR1", "PC9-MGH", "PC9-VU")) +
   theme(
-    legend.position = "none",
+    legend.position = "none", legend.text = element_text(size=14),
     plot.title = element_text(size = 14, hjust = 0.5, face = "bold"), axis.text=element_text(size=14),
     legend.title = element_text(size=14), axis.title=element_text(size=14),
-    panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-  ggsave("FIG_2B.pdf", width = 6, height = 5)
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
+
+plt_CLV_cFP + ggsave("FIG_2B_revised.svg", width = 6, height = 5)
+# # Change legend.position to right, then run arguments to get legend
+# leg_CLV_cFP <- get_legend(plt_CLV_cFP)
+# as_ggplot(leg_CLV_cFP) + ggsave("legend_FIG_2B.svg", width = 3, height = 3)
 
 # Establish discrete subline (DS) cohort
 sublines = c("DS1", "DS3", "DS4", "DS6",
@@ -990,84 +1012,35 @@ sublines = c("DS1", "DS3", "DS4", "DS6",
 subline_DIP = subset(DIPfits, DIPfits$Line%in%sublines)
 
 # Subline DIP rate distribution plotting
-ggplot(subline_DIP, aes(x=DIP, fill=Line, color=Line)) +
-  geom_density(alpha=.5, size = 1.5) +
-  geom_vline(xintercept = 0, size = 1, colour = "black",
-             linetype = "dashed") +
-  theme_bw() + xlim(-0.03, 0.05) +
-  facet_wrap(.~Line, ncol = 4) +
+plt_sublines_cFP <- ggplot(subline_DIP, aes(x=DIP, fill=Line, color=Line)) +
+  geom_density(alpha=.1, size = 1) +
+  geom_density(data = subset(CLV_DIP, Line == "PC9-VU"), aes(x=DIP), alpha = 0,
+               size = 1, linetype = "dashed") +
+  # geom_vline(xintercept = 0, size = 1, colour = "black",
+  #            linetype = "dashed") +
+  theme_bw() + xlim(-0.015, 0.025) +
+  # facet_wrap(.~Line, ncol = 4) +
   labs(x = "DIP Rate", y = "Density")+
   scale_color_manual(values = c("coral", "brown", "deepskyblue",
                                 "deeppink", "darkorchid", "seagreen",
-                                "gold")) +
+                                "gold", "black")) +
   scale_fill_manual(values = c("coral", "brown", "deepskyblue",
                                "deeppink", "darkorchid", "seagreen",
-                               "gold")) +
+                               "gold", "black")) +
   theme(
-    legend.position = "none",
+    legend.position = "none", legend.text = element_text(size=14),
     plot.title = element_text(size = 14, hjust = 0.5, face = "bold"), axis.text=element_text(size=14),
     legend.title = element_text(size=14), axis.title=element_text(size=14),
-    panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-  ggsave("FIG_2D.pdf", width = 8, height = 5)
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
+
+plt_sublines_cFP + ggsave("FIG_2D_revised.svg", width = 6, height = 5)
+# # Change legend.position to right, then run arguments to get legend
+# leg_sublines_cFP <- get_legend(plt_sublines_cFP)
+# as_ggplot(leg_sublines_cFP) + ggsave("legend_FIG_2D.svg", width = 3, height = 3)
 
 
-# Plot PC9-VU and PC9-VU sublines on common plot
-## With statistics - median difference in distributions
+# Run statistical test (Mood's median test) to identify if subline distributions are distinct
 library(RVAideMemoire)
 pval_medians <- mood.medtest(DIP ~ Line,
                              data  = subline_DIP,
                              exact = FALSE)[5]
-
-# New cohort - sublines without DS8
-sublines_noDS8 = c("DS1", "DS3", "DS4", 
-                   "DS6", "DS7", "DS9")
-VU = "PC9-VU"
-DS8 = "DS8"
-
-# Make separate dataframes (easier plotting in ggplot)
-subline_DIP_noDS8 = subset(DIPfits, DIPfits$Line%in%sublines_noDS8)
-VU_DIP = subset(DIPfits, DIPfits$Line%in%VU)
-DS8_DIP = subset(DIPfits, DIPfits$Line%in%DS8)
-
-# Make factor order
-subline_DIP_noDS8$Line_f = factor(subline_DIP_noDS8$Line, 
-                                  levels=c("DS1", "DS3", "DS4", 
-                                           "DS6", "DS7", "DS9"))
-
-# Make annotation dataframe for median test p-value
-annotation <- data.frame(
-  x = 0.012,
-  y = 150,
-  label = paste("p =", formatC(pval_medians$p.value, format = "e", digits = 2))
-)
-
-# Plot sublines and PC9-VU with special populations highlighted
-## In FIG. S4C, p-value is changed to <0.001 for simplicity
-ggplot(subline_DIP_noDS8, aes(x=DIP, fill=Line, color=Line)) +
-  geom_density(alpha=.1, size = 1) +
-  geom_density(data = VU_DIP, alpha = 0.25, size = 1, 
-               aes(x=DIP, fill=Line, color=Line)) +
-  geom_density(data = DS8_DIP, alpha = 0.25, size = 1, 
-               aes(x=DIP, fill=Line, colour=Line)) +
-  theme_bw() + 
-  geom_text(data=annotation, aes(x=x, y=y, label=label),
-            inherit.aes=FALSE, parse = FALSE, size = 5) +
-  scale_color_manual(values = c("grey50", "grey50", "grey50",
-                                "grey50", "grey50", "seagreen",
-                                "grey50", "blue"),
-                     labels = c("DS1", "DS3", "DS4", "DS6",
-                                "DS7", "DS8", "DS9", "VU")) +
-  scale_fill_manual(values = c("grey50", "grey50", "grey50",
-                               "grey50", "grey50", "seagreen",
-                               "grey50", "blue"),
-                    labels = c("DS1", "DS3", "DS4", "DS6",
-                               "DS7", "DS8", "DS9", "VU")) +
-  geom_vline(xintercept = 0, size = 1, colour = "black",
-             linetype = "dashed") +
-  labs(x = "DIP Rate", y = "Density") + xlim(-0.012, 0.018) +
-  theme(
-    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-    legend.position = "right",
-    plot.title = element_text(size = 14, hjust = 0.5, face = "bold"), axis.text=element_text(size=12),
-    legend.title = element_text(size=12), axis.title=element_text(size=12)) +
-  ggsave("FIG_S4C.pdf", width = 6, height = 4)

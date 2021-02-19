@@ -1,4 +1,4 @@
-setwd("~/Documents/QuarantaLab/GES_2020/Joint_functions/")
+setwd("~/git/GES_2020/Joint_functions/")
 source("SumSE.R") # Summarize function to get the summary statistics;
 source("utMA.R") # Time-averaging code
 
@@ -13,6 +13,8 @@ library(readxl)
 library(dplyr)
 require(ggplot2)
 require(Hmisc)
+library(ggpubr)
+
 # ============================================================================================================
 # ============================================================================================================
 
@@ -40,7 +42,7 @@ erlPC9L = styleDrugPlate96(erlPfile, erlPC9)
 # Normalize for change in cell counts after drug change - Erlotinib treated
 dcErlPC9L = remDrugChange(erlPC9L)
 
-#Exponential smoothing of count data - Erlotinib treated
+# Exponential smoothing of count data - Erlotinib treated
 erlESmooth = expSmooth(dcErlPC9L, alpha = 0.6, countcol = "Count")
 
 # Implementation of time-step moving average 
@@ -90,142 +92,65 @@ erlPC9Stat3_renorm = subset(erlPC9Stat3_renorm, Time > 124)
 
 save(erlPC9Stat3, erlPC9Stat3_renorm, file = "../cFP/PopD_trajectories.RData")
 
-# Plot proliferation rate trajectories for all PC9 cell line family members - Untreated
-cols <- c("DS1" = "coral", "DS3" = "brown", "DS4" = "deepskyblue", "DS6" = "deeppink",
-          "DS7" = "darkorchid", "DS8" = "seagreen", "DS9" = "gold", "VU" = "blue",
-          "MGH" = "green", "BR1" = "red")
-pops <- c("DS1", "DS3", "DS4", "DS6", "DS7", 
-          "DS8","DS9", "VU", "MGH", "BR1")
-labs <- c("DS1", "DS3", "DS4", "DS6", "DS7", 
-          "DS8","DS9", "VU", "MGH", "BR1")
-
 ## Only plot from < 75h (before any wells reach confluence)
 unPC9Stat_cut <- unPC9Stat[unPC9Stat$Time < 75,]
-
-## Subsets of the data by cohort (Cell Line Versions; Sublines)
-unPC9Stat_cut_CLV <- subset(unPC9Stat_cut, Sample %in% c("VU", "MGH", "BR1"))
-unPC9Stat_cut_sublines <- subset(unPC9Stat_cut, Sample %in% c("DS1", "DS3", "DS4", "DS6", "DS7", "DS8", "DS9"))
-
-ggplot(unPC9Stat_cut, aes(x=Time, y=nl2, colour=Sample, group = Sample, fill = Sample)) +
-  # geom_line(size = 1.5) +
-  geom_smooth(method = "lm") + geom_point() + 
-  xlab("Time (hours)") + ylab("Normalized Log2 Count") + theme_bw() +
-  theme(legend.text = element_text(size = 12), 
-        plot.title = element_text(size = 12, hjust = 0.5),  
-        axis.text=element_text(size=12), legend.title = element_text(size=12), 
-        legend.position = "right", axis.title=element_text(size=12),
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-  scale_fill_manual(values = cols,
-                    breaks = pops,
-                    labels = labs) +
-  scale_color_manual(values = cols,
-                    breaks = pops,
-                    labels = labs) +
-  ggsave("allSamples_untreated.pdf", width = 6, height = 4) 
-
-# Plot proliferation rate trajectories for all PC9 cell line family members - Erlotinib treated
-ggplot(erlPC9Stat3, aes(x=Time, y=nl2, colour=Sample, group = Sample, fill = Sample)) +
-  geom_smooth(method = "loess") + geom_point() + 
-  xlab("Time (hours)") + ylab("Normalized Log2 Count") + theme_bw() +
-  theme(legend.text = element_text(size = 12), 
-        plot.title = element_text(size = 12, hjust = 0.5),  
-        axis.text=element_text(size=12), legend.title = element_text(size=12), 
-        legend.position = "right", axis.title=element_text(size=12),
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-  scale_fill_manual(values = cols,
-                    breaks = pops,
-                    labels = labs) +
-  scale_color_manual(values = cols,
-                     breaks = pops,
-                     labels = labs) +
-  ggsave("FIG_S4B.pdf", width = 6, height = 4)
-
-## Plot cohort subsets
-cols_p <- c("VU" = "blue", "MGH" = "green", "BR1" = "red")
-pops_p <- c("VU", "MGH", "BR1")
-labs_p <- c("VU", "MGH", "BR1")
-cols_c <- c("DS1" = "coral", "DS3" = "brown", "DS4" = "deepskyblue", "DS6" = "deeppink",
-          "DS7" = "darkorchid", "DS8" = "seagreen", "DS9" = "gold")
-pops_c <- c("DS1", "DS3", "DS4", "DS6", "DS7", 
-          "DS8","DS9")
-labs_c <- c("DS1", "DS3", "DS4", "DS6", "DS7", 
-          "DS8","DS9")
-
-### Cell Line Versions
-ggplot(unPC9Stat_cut_CLV, aes(x=Time, y=nl2, colour=Sample, group = Sample, fill = Sample)) +
-  geom_smooth(method = "lm") + geom_point() + 
-  xlab("Time (hours)") + ylab("Normalized Log2 Count") + theme_bw() +
-  theme(legend.text = element_text(size = 12), 
-        plot.title = element_text(size = 12, hjust = 0.5),  
-        axis.text=element_text(size=12), legend.title = element_text(size=12), 
-        legend.position = "right", axis.title=element_text(size=12),
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-  scale_fill_manual(values = cols_p,
-                    breaks = pops_p,
-                    labels = labs_p) +
-  scale_color_manual(values = cols_p,
-                     breaks = pops_p,
-                     labels = labs_p) +
-  ggsave("FIG_S3A.pdf", width = 6, height = 4)
-
-### Sublines
-ggplot(unPC9Stat_cut_sublines, aes(x=Time, y=nl2, colour=Sample, group = Sample, fill = Sample)) +
-  geom_smooth(method = "lm") + geom_point() + 
-  xlab("Time (hours)") + ylab("Normalized Log2 Count") + theme_bw() +
-  theme(legend.text = element_text(size = 12), 
-        plot.title = element_text(size = 12, hjust = 0.5),  
-        axis.text=element_text(size=12), legend.title = element_text(size=12), 
-        legend.position = "right", axis.title=element_text(size=12),
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-  scale_fill_manual(values = cols_c,
-                    breaks = pops_c,
-                    labels = labs_c) +
-  scale_color_manual(values = cols_c,
-                     breaks = pops_c,
-                     labels = labs_c) +
-  ggsave("FIG_S3C.pdf", width = 6, height = 4)
-
 
 # Subset samples (for later plots)
 smoothsub = subset(erlPC9Stat3, !erlPC9Stat3$Sample%in%c("BR1","MGH","VU"))
 smoothsub_VU = subset(erlPC9Stat3, erlPC9Stat3$Sample%in%c("VU"))
 smoothsub_CLV = subset(erlPC9Stat3, erlPC9Stat3$Sample%in%c("BR1","MGH","VU"))
 untreated_CLV <- subset(unPC9Stat_cut, unPC9Stat_cut$Sample%in%c("BR1","MGH","VU"))
-
-# Add untreated sample means as control for Erlotinib treated samples
-untreated_CLV$Sample <- "Control"
+untreated_sublines <- subset(unPC9Stat_cut, !unPC9Stat_cut$Sample%in%c("BR1","MGH","VU"))
 
 # Plot exponentially smoothed drug response for cell line versions
-ggplot(smoothsub_CLV,aes(x=Time, y=nl2, colour=Sample, group = Sample, fill = Sample)) +
-  geom_smooth(data = untreated_CLV, aes(x=Time, y=nl2), 
-              color = "black", linetype = "dashed", size = 1, se = FALSE, method = "lm") +
-  geom_point() + geom_smooth() + theme_bw() + xlab("Time (hours)") + ylab("Normalized Log2 Count") +
-  scale_color_manual(values = c("red", "green", "blue", "black")) +
-  scale_fill_manual(values = c("red", "black", "green", "blue")) +
+plt_CLV <- ggplot() +
+  geom_point(data = smoothsub_CLV, aes(x=Time, y=nl2, color = Sample, group = Sample, fill = Sample)) +
+  geom_smooth(data = smoothsub_CLV, aes(x=Time, y=nl2, color = Sample, group = Sample, fill = Sample)) +
+  geom_smooth(data = untreated_CLV, aes(x=Time, y=nl2, color = Sample), 
+              method = "lm", linetype = "dashed", se = FALSE) +
+  theme_bw() + xlab("Time (hours)") + ylab("Normalized Log2 Cell Count") +
+  scale_color_manual(values = c("red", "green", "blue")) +
+  scale_fill_manual(values = c("red", "green", "blue")) +
   ylim(-1,4) +
   theme(legend.text = element_text(size = 14),
         plot.title = element_text(size = 14, hjust = 0.5, face = "bold"),
         axis.text=element_text(size=14), legend.title = element_text(size=14),
-        legend.position = "bottom", axis.title=element_text(size=14),
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-  ggsave("FIG_2A.pdf", width = 5, height = 5) 
+        legend.position = "none", axis.title=element_text(size=14),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
+
+plt_CLV + ggsave("FIG_2A_revised.svg", width = 5, height = 5)
+# # Change legend.position to right, then run arguments to get legend
+# leg_CLV <- get_legend(plt_CLV)
+# as_ggplot(leg_CLV) + ggsave("legend_FIG_2A.svg", width = 3, height = 1)
 
 # Plot exponentially smoothed drug response for sublines
-ggplot(smoothsub,aes(x=Time, y=nl2, colour=Sample, group = Sample, fill = Sample)) +
-  geom_point() + geom_smooth() + theme_bw() + xlab("Time (hours)") + ylab("Normalized Log2 Count") + 
-  facet_wrap(Drug~Sample, ncol = 4) + ylim(-1,4) +
+plt_sublines <- ggplot() +
+  geom_point(data = smoothsub, aes(x=Time, y=nl2, color = Sample, group = Sample, fill = Sample)) +
+  geom_smooth(data = smoothsub, aes(x=Time, y=nl2, color = Sample, group = Sample, fill = Sample)) +
+  geom_smooth(data = subset(smoothsub_CLV, Sample == "VU"), 
+              aes(x=Time, y=nl2, color = Sample), se = FALSE) +
+  geom_smooth(data = untreated_sublines, aes(x=Time, y=nl2, color = Sample), 
+              method = "lm", linetype = "dashed", se = FALSE) +
+  theme_bw() + 
+  xlab("Time (hours)") + ylab("Normalized Log2 Cell Count") + 
+  # facet_wrap(Drug~Sample, ncol = 4) + 
+  ylim(-1,4) +
   scale_color_manual(values = c("coral", "brown", "deepskyblue",
                                 "deeppink", "darkorchid", "seagreen",
                                 "gold", "black")) +
   scale_fill_manual(values = c("coral", "brown", "deepskyblue",
                                "deeppink", "darkorchid", "seagreen",
                                "gold", "black")) +
-  theme(legend.text = element_text(size = 12), 
+  theme(legend.text = element_text(size = 14), 
         plot.title = element_text(size = 14, hjust = 0.5, face = "bold"), 
-        axis.text=element_text(size=12),
-        legend.title = element_text(size=12),
+        axis.text=element_text(size=14),
+        legend.title = element_text(size=14),
         legend.position = "none",
-        axis.title=element_text(size=12),
+        axis.title=element_text(size=14),
         # legend.position = c(0.95, -0.05), legend.justification = c(1, 0),
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-  ggsave("FIG_2C.pdf", width = 8, height = 5)
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+plt_sublines + ggsave("FIG_2C_revised.svg", width = 5, height = 5)
+# Change legend.position to right, then run arguments to get legend
+leg_sublines <- get_legend(plt_sublines)
+as_ggplot(leg_sublines) + ggsave("legend_FIG_2C.svg", width = 3, height = 3)
