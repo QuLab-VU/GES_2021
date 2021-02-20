@@ -1,4 +1,4 @@
-setwd('~/Documents/QuarantaLab/GES_2020/WES/')
+setwd('~/git/GES_2020/WES/')
 
 # devtools::install_github(repo="knausb/vcfR")
 library(reshape2)
@@ -37,14 +37,14 @@ ggplot(num_muts, aes(x=Sample, y=value, fill = variable)) +
         plot.title = element_text(size = 12, hjust = 0.5), axis.text=element_text(size=12),
         legend.title = element_text(size=12), axis.title=element_text(size=12),
         panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-  ggsave("FIG_S5A.pdf", width = 12, height = 4)
+  ggsave("FIG_S3A.pdf", width = 12, height = 4)
 
 # Initiate objects for data quality control (QC) analysis 
 vcf <- read.vcfR("/Users/Corey/Documents/QuarantaLab/PC9/WXS/accre_vars/samples_called_vars_named.vcf.gz", verbose = TRUE)
 dna <- ape::read.dna("/Volumes/quaranta/Data/WXS/bwa_ref_genome/Homo_sapiens_assembly38.fasta", format = "fasta")
 gff <- read.table("/Volumes/quaranta/Data/RNAseq/PC9_scRNAseq/genes.gtf", sep="\t", quote="")
 
-# Plot QC metrics for compiled dataset (all variants in all samples) - FIG. S5B
+# Plot QC metrics for compiled dataset (all variants in all samples) - FIG. S3B
 chrom <- create.chromR(name="Supercontig", vcf=vcf, seq=dna, ann=gff, verbose=TRUE)
 chromoqc(chrom)
 
@@ -60,7 +60,7 @@ upset_CLV <- c("VU" = shared_vars_CLV[1, "Number"],
                "MGH&BR1" = shared_vars_CLV[6, "Number"],
                "VU&MGH&BR1" = shared_vars_CLV[7, "Number"])
 
-### FIG. S5C - saved as 6x9 PDF
+### FIG. S3C - saved as 6x9 PDF
 upset(fromExpression(upset_CLV), order.by = "freq",
       sets.bar.color = c("green", "red", "blue"), 
       mb.ratio = c(0.55, 0.45), nintersects = NA,
@@ -102,7 +102,7 @@ upset_sublines <- c("DS3" = shared_vars_sublines[1, "Number"],
                     "DS6&DS7&DS8&DS9" = shared_vars_sublines[30, "Number"],
                     "DS3&DS6&DS7&DS8&DS9" = shared_vars_sublines[31, "Number"])
 
-### FIG. S5D - saved as 6x9 PDF
+### FIG. S3D - saved as 6x9 PDF
 upset(fromExpression(upset_sublines), order.by = "freq",
       sets.bar.color = c("brown", "seagreen", "deeppink", "gold", "darkorchid"), 
       mb.ratio = c(0.55, 0.45), nintersects = NA,
@@ -177,7 +177,7 @@ upset_VUDS <- c("VU" = shared_vars_VUDS[1, "Number"],
                 "DS3&DS6&DS7&DS8&DS9" = shared_vars_VUDS[62, "Number"],
                 "VU&DS3&DS6&DS7&DS8&DS9" = shared_vars_VUDS[63, "Number"])
 
-### FIG. S5E - saved as 6x9 PDF
+### FIG. S3E - saved as 6x9 PDF
 upset(fromExpression(upset_VUDS), order.by = "freq", nsets = 6,
       sets.bar.color = c("brown", "seagreen", "deeppink", "gold", "darkorchid", "blue"),
       mb.ratio = c(0.55, 0.45), nintersects = NA,
@@ -249,8 +249,9 @@ grid_data_CLV$end <- grid_data_CLV$end[ c( nrow(grid_data_CLV), 1:nrow(grid_data
 grid_data_CLV$start <- grid_data_CLV$start - 1
 grid_data_CLV <- grid_data_CLV[-1,]
 
-ggplot(data_CLV, aes(x=as.factor(id), y=value, fill=population)) + 
-  geom_bar(aes(x=as.factor(id), y=value, fill=population), stat="identity", alpha=0.5) +
+ggplot() + 
+  geom_bar(data = data_CLV, aes(x=as.factor(id), y=value, fill=population), color = "black",
+           stat="identity", alpha=0.5) +
   # Add reference lines
   geom_segment(data=grid_data_CLV, aes(x = end, y = -3000, xend = start, yend = 3000), 
                colour = "black", alpha=1, size=0.3, inherit.aes = FALSE ) +
@@ -264,10 +265,8 @@ ggplot(data_CLV, aes(x=as.factor(id), y=value, fill=population)) +
                colour = "black", alpha=1, size=0.3 , inherit.aes = FALSE ) +
   # Add text showing the value of each lines
   annotate("text", x = rep(max(data_CLV$id),5), y = c(-3000, -2000, -1000, 0, 1000), 
-           label = c("-3000", "-2000", "-1000", "0", "1000") , 
+           label = c("-3000", "-2000", "-1000", "0", "1000"), 
            color="black", size=3 , angle=0, fontface="bold", hjust=1) +
-  geom_bar(aes(x=as.factor(id), y=value, fill=population), 
-           color = "black", size = 0.25, stat="identity", alpha=0.5) +
   ylim(-3000,1250) + theme_minimal() + coord_polar() + 
   theme(
     legend.position = "none",
@@ -319,8 +318,9 @@ grid_data_sublines$end <- grid_data_sublines$end[ c( nrow(grid_data_sublines),
 grid_data_sublines$start <- grid_data_sublines$start - 1
 grid_data_sublines <- grid_data_sublines[-1,]
 
-ggplot(data_sublines, aes(x=as.factor(id), y=value, fill=population)) + 
-  geom_bar(aes(x=as.factor(id), y=value, fill=population), stat="identity", alpha=0.5) +
+ggplot() + 
+  geom_bar(data_sublines, aes(x=as.factor(id), y=value, fill=population), 
+           color = "black", stat="identity", alpha=0.5) +
   # Add reference lines
   geom_segment(data=grid_data_sublines, aes(x = end, y = -3000, xend = start, yend = 3000), 
                colour = "black", alpha=1, size=0.3, inherit.aes = FALSE ) +
@@ -336,8 +336,6 @@ ggplot(data_sublines, aes(x=as.factor(id), y=value, fill=population)) +
   annotate("text", x = rep(max(data_sublines$id),5), y = c(-3000, -2000, -1000, 0, 1000), 
            label = c("-3000", "-2000", "-1000", "0", "1000") , 
            color="black", size=3 , angle=0, fontface="bold", hjust=1) +
-  geom_bar(aes(x=as.factor(id), y=value, fill=population), 
-           color = "black", size = 0.25, stat="identity", alpha=0.5) +
   ylim(-3000,1250) + theme_minimal() + coord_polar() + 
   theme(
     legend.position = "none",
@@ -401,7 +399,7 @@ getExtras <- function(data) {
   return(data)
 }
 
-# Data can be generated from VCFtoVEP.txt script or provided upon request
+# Data can be generated from VCFtoVEP.txt script or in supplementary data files
 setwd('/Volumes/quaranta/Data/WXS/PC9/vep_data')
 
 ## Cell Line Versions
@@ -525,30 +523,30 @@ test_s7_dedup <- test_s7[!duplicated(test_s7$X.Uploaded_variation), ]
 test_s8_dedup <- test_s8[!duplicated(test_s8$X.Uploaded_variation), ]
 
 
-## Sublines (excluding DS8)
-test_all_noDS8 <- Reduce(merge, list(test4, test5, test6, test8))
-test_s4_noDS8 <- test4[which(!(unlist(test4['X.Uploaded_variation']) %in% unlist(test_all_noDS8['X.Uploaded_variation'])) &
-                         !(unlist(test4['X.Uploaded_variation']) %in% unlist(test_s4_5['X.Uploaded_variation'])) &
-                         !(unlist(test4['X.Uploaded_variation']) %in% unlist(test_s4_6['X.Uploaded_variation'])) &
-                         !(unlist(test4['X.Uploaded_variation']) %in% unlist(test_s4_8['X.Uploaded_variation']))),]
-test_s5_noDS8 <- test5[which(!(unlist(test5['X.Uploaded_variation']) %in% unlist(test_all_noDS8['X.Uploaded_variation'])) &
-                         !(unlist(test5['X.Uploaded_variation']) %in% unlist(test_s4_5['X.Uploaded_variation'])) &
-                         !(unlist(test5['X.Uploaded_variation']) %in% unlist(test_s5_6['X.Uploaded_variation'])) &
-                         !(unlist(test5['X.Uploaded_variation']) %in% unlist(test_s5_8['X.Uploaded_variation']))),]
-test_s6_noDS8 <- test6[which(!(unlist(test6['X.Uploaded_variation']) %in% unlist(test_all_noDS8['X.Uploaded_variation'])) &
-                         !(unlist(test6['X.Uploaded_variation']) %in% unlist(test_s4_6['X.Uploaded_variation'])) &
-                         !(unlist(test6['X.Uploaded_variation']) %in% unlist(test_s5_6['X.Uploaded_variation'])) &
-                         !(unlist(test6['X.Uploaded_variation']) %in% unlist(test_s6_8['X.Uploaded_variation']))),]
-test_s8_noDS8 <- test8[which(!(unlist(test8['X.Uploaded_variation']) %in% unlist(test_all_noDS8['X.Uploaded_variation'])) &
-                         !(unlist(test8['X.Uploaded_variation']) %in% unlist(test_s4_8['X.Uploaded_variation'])) &
-                         !(unlist(test8['X.Uploaded_variation']) %in% unlist(test_s5_8['X.Uploaded_variation'])) &
-                         !(unlist(test8['X.Uploaded_variation']) %in% unlist(test_s6_8['X.Uploaded_variation']))),]
-
-### Remove duplicated variants (variants annotations can be duplicated from VEP)
-test_s4_noDS8_dedup <- test_s4[!duplicated(test_s4_noDS8$X.Uploaded_variation), ]
-test_s5_noDS8_dedup <- test_s5[!duplicated(test_s5_noDS8$X.Uploaded_variation), ]
-test_s6_noDS8_dedup <- test_s6[!duplicated(test_s6_noDS8$X.Uploaded_variation), ]
-test_s8_noDS8_dedup <- test_s8[!duplicated(test_s8_noDS8$X.Uploaded_variation), ]
+# ## Sublines (excluding DS8)
+# test_all_noDS8 <- Reduce(merge, list(test4, test5, test6, test8))
+# test_s4_noDS8 <- test4[which(!(unlist(test4['X.Uploaded_variation']) %in% unlist(test_all_noDS8['X.Uploaded_variation'])) &
+#                          !(unlist(test4['X.Uploaded_variation']) %in% unlist(test_s4_5['X.Uploaded_variation'])) &
+#                          !(unlist(test4['X.Uploaded_variation']) %in% unlist(test_s4_6['X.Uploaded_variation'])) &
+#                          !(unlist(test4['X.Uploaded_variation']) %in% unlist(test_s4_8['X.Uploaded_variation']))),]
+# test_s5_noDS8 <- test5[which(!(unlist(test5['X.Uploaded_variation']) %in% unlist(test_all_noDS8['X.Uploaded_variation'])) &
+#                          !(unlist(test5['X.Uploaded_variation']) %in% unlist(test_s4_5['X.Uploaded_variation'])) &
+#                          !(unlist(test5['X.Uploaded_variation']) %in% unlist(test_s5_6['X.Uploaded_variation'])) &
+#                          !(unlist(test5['X.Uploaded_variation']) %in% unlist(test_s5_8['X.Uploaded_variation']))),]
+# test_s6_noDS8 <- test6[which(!(unlist(test6['X.Uploaded_variation']) %in% unlist(test_all_noDS8['X.Uploaded_variation'])) &
+#                          !(unlist(test6['X.Uploaded_variation']) %in% unlist(test_s4_6['X.Uploaded_variation'])) &
+#                          !(unlist(test6['X.Uploaded_variation']) %in% unlist(test_s5_6['X.Uploaded_variation'])) &
+#                          !(unlist(test6['X.Uploaded_variation']) %in% unlist(test_s6_8['X.Uploaded_variation']))),]
+# test_s8_noDS8 <- test8[which(!(unlist(test8['X.Uploaded_variation']) %in% unlist(test_all_noDS8['X.Uploaded_variation'])) &
+#                          !(unlist(test8['X.Uploaded_variation']) %in% unlist(test_s4_8['X.Uploaded_variation'])) &
+#                          !(unlist(test8['X.Uploaded_variation']) %in% unlist(test_s5_8['X.Uploaded_variation'])) &
+#                          !(unlist(test8['X.Uploaded_variation']) %in% unlist(test_s6_8['X.Uploaded_variation']))),]
+# 
+# ### Remove duplicated variants (variants annotations can be duplicated from VEP)
+# test_s4_noDS8_dedup <- test_s4[!duplicated(test_s4_noDS8$X.Uploaded_variation), ]
+# test_s5_noDS8_dedup <- test_s5[!duplicated(test_s5_noDS8$X.Uploaded_variation), ]
+# test_s6_noDS8_dedup <- test_s6[!duplicated(test_s6_noDS8$X.Uploaded_variation), ]
+# test_s8_noDS8_dedup <- test_s8[!duplicated(test_s8_noDS8$X.Uploaded_variation), ]
 
 ## Plot unique impact mutations and proportions - CLV
 ### Make dataset of unique and total mutations, with the proportion
@@ -599,54 +597,54 @@ ggplot(impact_CLV_risky, aes(x = Population, y = Count, fill = Risk)) +
   ggsave("FIG_3C_REVISION.pdf", width = 6, height = 3)
 
 
-## Plot unique impact mutations and proportions - sublines without DS8
-### Make dataset of unique and total mutations, with the proportion
-unique_prop_sublines_noDS8 <- data.frame(Population = c("DS3", "DS6", "DS7", "DS9"),
-                                         Total = c(nrow(test4_dedup), nrow(test5_dedup), 
-                                                   nrow(test6_dedup), nrow(test8_dedup)),
-                                         Unique = c(nrow(test_s4_dedup_noDS8), nrow(test_s5_dedup_noDS8), 
-                                                    nrow(test_s6_dedup_noDS8), nrow(test_s8_dedup_noDS8)))
-unique_prop_sublines_noDS8$Proportion <- unique_prop_sublines_noDS8$Unique / unique_prop_sublines_noDS8$Total
-
-### Plot proportion of unique mutations in each subline
-ggplot(unique_prop_sublines_noDS8, aes(x = Population, y = Proportion, fill = Population)) +
-  geom_bar(stat = "identity", color = "black") + 
-  theme_minimal() + labs(x = "Cell Line Version", y = "Proportion of Unique Mutations") +
-  scale_fill_manual(values = c("brown", "deeppink", "darkorchid", "gold")) +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        legend.position = "none", axis.title.x = element_blank(), axis.text.x = element_blank(),
-        axis.ticks.x = element_blank(), axis.line.y = element_line(),
-        plot.title = element_text(size = 12, hjust = 0.5), axis.text=element_text(size=12),
-        legend.title = element_text(size=12), axis.title=element_text(size=12)) +
-  ggsave("FIG_4B.pdf", width = 6, height = 3)
-
-### Calculate the number of unique mutations different impact scores 
-impact_DS3_noDS8 <- dplyr::mutate(melt(table(test_s4_dedup_noDS8$Impact)), prop = value / sum(value))
-impact_DS6_noDS8 <- dplyr::mutate(melt(table(test_s5_dedup_noDS8$Impact)), prop = value / sum(value))
-impact_DS7_noDS8 <- dplyr::mutate(melt(table(test_s6_dedup_noDS8$Impact)), prop = value / sum(value))
-impact_DS9_noDS8 <- dplyr::mutate(melt(table(test_s8_dedup_noDS8$Impact)), prop = value / sum(value))
-
-### Put into common dataframe and remove MODIFIER variants (no predicted effect)
-#### Percentage above plots in main figures are the percentage of IMPACT mutations
-#### (i.e., number on this plot) in the total number of unique mutations
-impact_sublines_noDS8 = do.call("rbind", list(impact_DS3_noDS8, impact_DS6_noDS8, impact_DS7_noDS8, impact_DS9_noDS8))
-impact_sublines_noDS8$pop <- rep(c("DS3", "DS6", "DS7", "DS9"), each = 4)
-colnames(impact_sublines_noDS8) <- c("Risk", "Count", "Proportion", "Population")
-impact_sublines_noDS8_risky <- impact_sublines_noDS8[!(impact_sublines_noDS8$Risk == "MODIFIER"),]
-
-### Plot IMPACT mutations
-ggplot(impact_sublines_noDS8_risky, 
-       aes(x = factor(Population, levels = c("DS3", "DS6", "DS7", "DS9")),
-           y = Count, fill=factor(Risk, levels = c("HIGH", "MODERATE", "LOW")))) + 
-  geom_bar(stat = "identity", color = "black") + 
-  theme_classic() + labs(x = "Subline", y = "Number of IMPACT Mutations") +
-  scale_fill_manual(values = c("red", "orange", "yellow"), name = "Risk") +
-  theme(
-    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-    legend.position = "none",
-    plot.title = element_text(size = 12, hjust = 0.5), axis.text=element_text(size=12),
-    legend.title = element_text(size=12), axis.title=element_text(size=12))+
-  ggsave("FIG_4C.pdf", width = 6, height = 3)
+# ## Plot unique impact mutations and proportions - sublines without DS8
+# ### Make dataset of unique and total mutations, with the proportion
+# unique_prop_sublines_noDS8 <- data.frame(Population = c("DS3", "DS6", "DS7", "DS9"),
+#                                          Total = c(nrow(test4_dedup), nrow(test5_dedup), 
+#                                                    nrow(test6_dedup), nrow(test8_dedup)),
+#                                          Unique = c(nrow(test_s4_dedup_noDS8), nrow(test_s5_dedup_noDS8), 
+#                                                     nrow(test_s6_dedup_noDS8), nrow(test_s8_dedup_noDS8)))
+# unique_prop_sublines_noDS8$Proportion <- unique_prop_sublines_noDS8$Unique / unique_prop_sublines_noDS8$Total
+# 
+# ### Plot proportion of unique mutations in each subline
+# ggplot(unique_prop_sublines_noDS8, aes(x = Population, y = Proportion, fill = Population)) +
+#   geom_bar(stat = "identity", color = "black") + 
+#   theme_minimal() + labs(x = "Cell Line Version", y = "Proportion of Unique Mutations") +
+#   scale_fill_manual(values = c("brown", "deeppink", "darkorchid", "gold")) +
+#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+#         legend.position = "none", axis.title.x = element_blank(), axis.text.x = element_blank(),
+#         axis.ticks.x = element_blank(), axis.line.y = element_line(),
+#         plot.title = element_text(size = 12, hjust = 0.5), axis.text=element_text(size=12),
+#         legend.title = element_text(size=12), axis.title=element_text(size=12)) +
+#   ggsave("FIG_4B.pdf", width = 6, height = 3)
+# 
+# ### Calculate the number of unique mutations different impact scores 
+# impact_DS3_noDS8 <- dplyr::mutate(melt(table(test_s4_dedup_noDS8$Impact)), prop = value / sum(value))
+# impact_DS6_noDS8 <- dplyr::mutate(melt(table(test_s5_dedup_noDS8$Impact)), prop = value / sum(value))
+# impact_DS7_noDS8 <- dplyr::mutate(melt(table(test_s6_dedup_noDS8$Impact)), prop = value / sum(value))
+# impact_DS9_noDS8 <- dplyr::mutate(melt(table(test_s8_dedup_noDS8$Impact)), prop = value / sum(value))
+# 
+# ### Put into common dataframe and remove MODIFIER variants (no predicted effect)
+# #### Percentage above plots in main figures are the percentage of IMPACT mutations
+# #### (i.e., number on this plot) in the total number of unique mutations
+# impact_sublines_noDS8 = do.call("rbind", list(impact_DS3_noDS8, impact_DS6_noDS8, impact_DS7_noDS8, impact_DS9_noDS8))
+# impact_sublines_noDS8$pop <- rep(c("DS3", "DS6", "DS7", "DS9"), each = 4)
+# colnames(impact_sublines_noDS8) <- c("Risk", "Count", "Proportion", "Population")
+# impact_sublines_noDS8_risky <- impact_sublines_noDS8[!(impact_sublines_noDS8$Risk == "MODIFIER"),]
+# 
+# ### Plot IMPACT mutations
+# ggplot(impact_sublines_noDS8_risky, 
+#        aes(x = factor(Population, levels = c("DS3", "DS6", "DS7", "DS9")),
+#            y = Count, fill=factor(Risk, levels = c("HIGH", "MODERATE", "LOW")))) + 
+#   geom_bar(stat = "identity", color = "black") + 
+#   theme_classic() + labs(x = "Subline", y = "Number of IMPACT Mutations") +
+#   scale_fill_manual(values = c("red", "orange", "yellow"), name = "Risk") +
+#   theme(
+#     panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+#     legend.position = "none",
+#     plot.title = element_text(size = 12, hjust = 0.5), axis.text=element_text(size=12),
+#     legend.title = element_text(size=12), axis.title=element_text(size=12))+
+#   ggsave("FIG_4C.pdf", width = 6, height = 3)
 
 ### Same analysis for sublines including DS8 (highlighting DS8)
 unique_prop_sublines <- data.frame(Population = c("DS3", "DS6", "DS7", "DS8", "DS9"),
@@ -670,7 +668,7 @@ ggplot(unique_prop_sublines, aes(x = factor(Population, levels = c("DS3", "DS6",
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         axis.line.y = element_line(), axis.title = element_text(size = 14),
         axis.text = element_text(size = 14), legend.position = "none",
-        axis.title.x = element_blank(), axis.text.x = element_blank()) 
+        axis.title.x = element_blank(), axis.text.x = element_blank()) +
   ggsave("FIG_4B_REVISION.pdf", width = 6, height = 3)
 
 
@@ -719,22 +717,22 @@ plotPie_class <- function(dat) {
 
 ## Plot the data
 ### CLV cohort
-plotPie_class(test_s1_dedup$Class) + ggsave("FIG_3F_VU.pdf", width = 6, height = 4)
-plotPie_class(test_s2_dedup$Class) + ggsave("FIG_3F_MGH.pdf", width = 6, height = 4)
-plotPie_class(test_s3_dedup$Class) + ggsave("FIG_3F_BR1.pdf", width = 6, height = 4)
+plotPie_class(test_s1_dedup$Class) + ggsave("FIG_S4B_VU.pdf", width = 6, height = 4)
+plotPie_class(test_s2_dedup$Class) + ggsave("FIG_S4B_MGH.pdf", width = 6, height = 4)
+plotPie_class(test_s3_dedup$Class) + ggsave("FIG_S4B_BR1.pdf", width = 6, height = 4)
 
-### Sublines (no DS8) cohort
-plotPie_class(test_s4_dedup_noDS8$Class) + ggsave("FIG_4F_DS3.pdf", width = 6, height = 4)
-plotPie_class(test_s5_dedup_noDS8$Class) + ggsave("FIG_4F_DS6.pdf", width = 6, height = 4)
-plotPie_class(test_s6_dedup_noDS8$Class) + ggsave("FIG_4F_DS7.pdf", width = 6, height = 4)
-plotPie_class(test_s8_dedup_noDS8$Class) + ggsave("FIG_4F_DS9.pdf", width = 6, height = 4)
+# ### Sublines (no DS8) cohort
+# plotPie_class(test_s4_dedup_noDS8$Class) + ggsave("FIG_4F_DS3.pdf", width = 6, height = 4)
+# plotPie_class(test_s5_dedup_noDS8$Class) + ggsave("FIG_4F_DS6.pdf", width = 6, height = 4)
+# plotPie_class(test_s6_dedup_noDS8$Class) + ggsave("FIG_4F_DS7.pdf", width = 6, height = 4)
+# plotPie_class(test_s8_dedup_noDS8$Class) + ggsave("FIG_4F_DS9.pdf", width = 6, height = 4)
 
 ### Sublines (with DS8) cohort
-plotPie_class(test_s4_dedup$Class) + ggsave("FIG_S10D_DS3.pdf", width = 6, height = 4)
-plotPie_class(test_s5_dedup$Class) + ggsave("FIG_S10D_DS6.pdf", width = 6, height = 4)
-plotPie_class(test_s6_dedup$Class) + ggsave("FIG_S10D_DS7.pdf", width = 6, height = 4)
-plotPie_class(test_s7_dedup$Class) + ggsave("FIG_S10D_DS8.pdf", width = 6, height = 4)
-plotPie_class(test_s8_dedup$Class) + ggsave("FIG_S10D_DS9.pdf", width = 6, height = 4)
+plotPie_class(test_s4_dedup$Class) + ggsave("FIG_S4B_DS3.pdf", width = 6, height = 4)
+plotPie_class(test_s5_dedup$Class) + ggsave("FIG_S4B_DS6.pdf", width = 6, height = 4)
+plotPie_class(test_s6_dedup$Class) + ggsave("FIG_S4B_DS7.pdf", width = 6, height = 4)
+plotPie_class(test_s7_dedup$Class) + ggsave("FIG_S4B_DS8.pdf", width = 6, height = 4)
+plotPie_class(test_s8_dedup$Class) + ggsave("FIG_S4B_DS9.pdf", width = 6, height = 4)
 
 
 # Relatedness of SNP genotypes (hierarchical clustering, PCA)
@@ -742,10 +740,10 @@ plotPie_class(test_s8_dedup$Class) + ggsave("FIG_S10D_DS9.pdf", width = 6, heigh
 library(gdsfmt)
 library(SNPRelate)
 
-setwd('~/Documents/QuarantaLab/GES_2020/WES/')
+setwd('~/git/GES_2020/WES/')
 
-## Load in file that includes all samples in common VCF file
-vcf_file <- "/Users/Corey/Documents/QuarantaLab/PC9/WXS/processed_data/samples_called_vars_named.vcf"
+## Load in file that includes all samples in common VCF file - see supplementary information files
+vcf_file <- "/Users/Corey/Documents/QuarantaLab/PC9/WXS/accre_vars/samples_called_vars_named.vcf"
 
 ## Convert vcf file to gds file (usable by SNPRelate)
 snpgdsVCF2GDS(vcf_file,"data.gds",method ="biallelic.only")
@@ -788,7 +786,7 @@ ggplot(data = tab, aes(x = EV1, y = EV2, fill = sample.id)) +
         plot.title = element_text(size = 14, hjust = 0.5, face = "bold"), axis.text=element_text(size=12),
         legend.title = element_text(size=12), axis.title=element_text(size=12),
         panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-  ggsave("FIG_S12A.pdf", width = 7, height = 5)
+  ggsave("FIG_S14A.pdf", width = 7, height = 5)
 
 ## Plot hierarchical clustering of SNP genotype relatedness
 set.seed(100)
@@ -796,7 +794,7 @@ set.seed(100)
 ### Run HC analysis
 ibs.hc<-snpgdsHCluster(snpgdsIBS(genofile,num.thread=2, autosome.only=FALSE))
 
-### Change labels and plot cluster tree - FIG. S12B
+### Change labels and plot cluster tree - FIG. S14B
 rv <- snpgdsCutTree(ibs.hc)
 dend <- rv$dendrogram
 dendextend::labels(dend) <- c("VU", "MGH", "DS8", "BR1", "DS9", "DS6", "DS3", "DS7")
@@ -804,64 +802,218 @@ plot(dend,main="Cluster Tree by SNPs - PC9", xlab = "Population", ylab = "Height
 
 
 # Identifying potential significantly mutated genes in each cohort
-# install_github("im3sanger/dndscv")
+## Find subsets unique among all 8 cell populations, instead of CLV and subline cohorts
+test1_dedup$Population <- NULL
+test2_dedup$Population <- NULL
+test3_dedup$Population <- NULL
+test4_dedup$Population <- NULL
+test5_dedup$Population <- NULL
+test6_dedup$Population <- NULL
+test7_dedup$Population <- NULL
+test8_dedup$Population <- NULL
+
+test_all_8 <- Reduce(merge, list(test1_dedup, test2_dedup, test3_dedup,
+                                 test4_dedup, test5_dedup, test6_dedup,
+                                 test7_dedup, test8_dedup))
+# 2 way comparisons - 28 instances - used for removing non-unique mutations
+test_dedup_s1_2 <- merge(test1_dedup, test2_dedup)
+test_dedup_s1_3 <- merge(test1_dedup, test3_dedup)
+test_dedup_s1_4 <- merge(test1_dedup, test4_dedup)
+test_dedup_s1_5 <- merge(test1_dedup, test5_dedup)
+test_dedup_s1_6 <- merge(test1_dedup, test6_dedup)
+test_dedup_s1_7 <- merge(test1_dedup, test7_dedup)
+test_dedup_s1_8 <- merge(test1_dedup, test8_dedup)
+
+test_dedup_s2_3 <- merge(test2_dedup, test3_dedup)
+test_dedup_s2_4 <- merge(test2_dedup, test4_dedup)
+test_dedup_s2_5 <- merge(test2_dedup, test5_dedup)
+test_dedup_s2_6 <- merge(test2_dedup, test6_dedup)
+test_dedup_s2_7 <- merge(test2_dedup, test7_dedup)
+test_dedup_s2_8 <- merge(test2_dedup, test8_dedup)
+
+test_dedup_s3_4 <- merge(test3_dedup, test4_dedup)
+test_dedup_s3_5 <- merge(test3_dedup, test5_dedup)
+test_dedup_s3_6 <- merge(test3_dedup, test6_dedup)
+test_dedup_s3_7 <- merge(test3_dedup, test7_dedup)
+test_dedup_s3_8 <- merge(test3_dedup, test8_dedup)
+
+test_dedup_s4_5 <- merge(test4_dedup, test5_dedup)
+test_dedup_s4_6 <- merge(test4_dedup, test6_dedup)
+test_dedup_s4_7 <- merge(test4_dedup, test7_dedup)
+test_dedup_s4_8 <- merge(test4_dedup, test8_dedup)
+
+test_dedup_s5_6 <- merge(test5_dedup, test6_dedup)
+test_dedup_s5_7 <- merge(test5_dedup, test7_dedup)
+test_dedup_s5_8 <- merge(test5_dedup, test8_dedup)
+
+test_dedup_s6_7 <- merge(test6_dedup, test7_dedup)
+test_dedup_s6_8 <- merge(test6_dedup, test8_dedup)
+
+test_dedup_s7_8 <- merge(test7_dedup, test8_dedup)
+
+
+test_s1_dedup_all8 <- test1_dedup[which(!(unlist(test1_dedup['X.Uploaded_variation']) %in% unlist(test_all_8['X.Uploaded_variation'])) &
+                                          !(unlist(test1_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s1_2['X.Uploaded_variation'])) &
+                                          !(unlist(test1_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s1_3['X.Uploaded_variation'])) &
+                                          !(unlist(test1_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s1_4['X.Uploaded_variation'])) &
+                                          !(unlist(test1_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s1_5['X.Uploaded_variation'])) &
+                                          !(unlist(test1_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s1_6['X.Uploaded_variation'])) &
+                                          !(unlist(test1_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s1_7['X.Uploaded_variation'])) &
+                                          !(unlist(test1_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s1_8['X.Uploaded_variation']))),]
+
+test_s2_dedup_all8 <- test2_dedup[which(!(unlist(test2_dedup['X.Uploaded_variation']) %in% unlist(test_all_8['X.Uploaded_variation'])) &
+                                          !(unlist(test2_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s1_2['X.Uploaded_variation'])) &
+                                          !(unlist(test2_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s2_3['X.Uploaded_variation'])) &
+                                          !(unlist(test2_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s2_4['X.Uploaded_variation'])) &
+                                          !(unlist(test2_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s2_5['X.Uploaded_variation'])) &
+                                          !(unlist(test2_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s2_6['X.Uploaded_variation'])) &
+                                          !(unlist(test2_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s2_7['X.Uploaded_variation'])) &
+                                          !(unlist(test2_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s2_8['X.Uploaded_variation']))),]
+
+test_s3_dedup_all8 <- test3_dedup[which(!(unlist(test3_dedup['X.Uploaded_variation']) %in% unlist(test_all_8['X.Uploaded_variation'])) &
+                                          !(unlist(test3_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s1_3['X.Uploaded_variation'])) &
+                                          !(unlist(test3_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s2_3['X.Uploaded_variation'])) &
+                                          !(unlist(test3_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s3_4['X.Uploaded_variation'])) &
+                                          !(unlist(test3_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s3_5['X.Uploaded_variation'])) &
+                                          !(unlist(test3_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s3_6['X.Uploaded_variation'])) &
+                                          !(unlist(test3_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s3_7['X.Uploaded_variation'])) &
+                                          !(unlist(test3_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s3_8['X.Uploaded_variation']))),]
+
+test_s4_dedup_all8 <- test4_dedup[which(!(unlist(test4_dedup['X.Uploaded_variation']) %in% unlist(test_all_8['X.Uploaded_variation'])) &
+                                          !(unlist(test4_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s1_4['X.Uploaded_variation'])) &
+                                          !(unlist(test4_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s2_4['X.Uploaded_variation'])) &
+                                          !(unlist(test4_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s3_4['X.Uploaded_variation'])) &
+                                          !(unlist(test4_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s4_5['X.Uploaded_variation'])) &
+                                          !(unlist(test4_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s4_6['X.Uploaded_variation'])) &
+                                          !(unlist(test4_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s4_7['X.Uploaded_variation'])) &
+                                          !(unlist(test4_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s4_8['X.Uploaded_variation']))),]
+
+test_s5_dedup_all8 <- test5_dedup[which(!(unlist(test5_dedup['X.Uploaded_variation']) %in% unlist(test_all_8['X.Uploaded_variation'])) &
+                                          !(unlist(test5_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s1_5['X.Uploaded_variation'])) &
+                                          !(unlist(test5_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s2_5['X.Uploaded_variation'])) &
+                                          !(unlist(test5_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s3_5['X.Uploaded_variation'])) &
+                                          !(unlist(test5_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s4_5['X.Uploaded_variation'])) &
+                                          !(unlist(test5_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s5_6['X.Uploaded_variation'])) &
+                                          !(unlist(test5_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s5_7['X.Uploaded_variation'])) &
+                                          !(unlist(test5_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s5_8['X.Uploaded_variation']))),]
+
+test_s6_dedup_all8 <- test6_dedup[which(!(unlist(test6_dedup['X.Uploaded_variation']) %in% unlist(test_all_8['X.Uploaded_variation'])) &
+                                          !(unlist(test6_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s1_6['X.Uploaded_variation'])) &
+                                          !(unlist(test6_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s2_6['X.Uploaded_variation'])) &
+                                          !(unlist(test6_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s3_6['X.Uploaded_variation'])) &
+                                          !(unlist(test6_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s4_6['X.Uploaded_variation'])) &
+                                          !(unlist(test6_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s5_6['X.Uploaded_variation'])) &
+                                          !(unlist(test6_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s6_7['X.Uploaded_variation'])) &
+                                          !(unlist(test6_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s6_8['X.Uploaded_variation']))),]
+
+test_s7_dedup_all8 <- test7_dedup[which(!(unlist(test7_dedup['X.Uploaded_variation']) %in% unlist(test_all_8['X.Uploaded_variation'])) &
+                                          !(unlist(test7_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s1_7['X.Uploaded_variation'])) &
+                                          !(unlist(test7_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s2_7['X.Uploaded_variation'])) &
+                                          !(unlist(test7_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s3_7['X.Uploaded_variation'])) &
+                                          !(unlist(test7_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s4_7['X.Uploaded_variation'])) &
+                                          !(unlist(test7_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s5_7['X.Uploaded_variation'])) &
+                                          !(unlist(test7_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s6_7['X.Uploaded_variation'])) &
+                                          !(unlist(test7_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s7_8['X.Uploaded_variation']))),]
+
+test_s8_dedup_all8 <- test8_dedup[which(!(unlist(test8_dedup['X.Uploaded_variation']) %in% unlist(test_all_8['X.Uploaded_variation'])) &
+                                          !(unlist(test8_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s1_8['X.Uploaded_variation'])) &
+                                          !(unlist(test8_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s2_8['X.Uploaded_variation'])) &
+                                          !(unlist(test8_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s3_8['X.Uploaded_variation'])) &
+                                          !(unlist(test8_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s4_8['X.Uploaded_variation'])) &
+                                          !(unlist(test8_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s5_8['X.Uploaded_variation'])) &
+                                          !(unlist(test8_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s6_8['X.Uploaded_variation'])) &
+                                          !(unlist(test8_dedup['X.Uploaded_variation']) %in% unlist(test_dedup_s7_8['X.Uploaded_variation']))),]
+
+# save(test_s1_dedup_all8, test_s2_dedup_all8, test_s3_dedup_all8, test_s4_dedup_all8, test_s5_dedup_all8,
+#      test_s6_dedup_all8, test_s7_dedup_all8, test_s8_dedup_all8, test_all_8, file = "mutations_all8_unique.RData")
+
+# load(file = "mutations_all8_unique.RData")
+
+## Load package needed to identify potentially impactful mutations
 library(dndscv)
 library(data.table)
 
-## Regular expression to pull out mutation characteristics
-### Mutation, chromosome number, location, reference allele, mutated allele
 getDatFormat <- function(data) {
   res <- str_match(data, "([^_]*)_(.*?)_(.*?)/(.*?)(/|$)")
 }
 
+## Get data in right format
+muts_VU_all8 <- as.data.frame(do.call(rbind, lapply(test_s1_dedup_all8$X.Uploaded_variation, getDatFormat)))[,1:5]
+names(muts_VU_all8) <- c("SampleID", "chr", "pos", "ref", "mut") 
+muts_VU_all8$SampleID <- "VU"
+
+muts_MGH_all8 <- as.data.frame(do.call(rbind, lapply(test_s2_dedup_all8$X.Uploaded_variation, getDatFormat)))[,1:5]
+names(muts_MGH_all8) <- c("SampleID", "chr", "pos", "ref", "mut") 
+muts_MGH_all8$SampleID <- "MGH"
+
+muts_BR1_all8 <- as.data.frame(do.call(rbind, lapply(test_s3_dedup_all8$X.Uploaded_variation, getDatFormat)))[,1:5]
+names(muts_BR1_all8) <- c("SampleID", "chr", "pos", "ref", "mut") 
+muts_BR1_all8$SampleID <- "BR1"
+
+muts_DS3_all8 <- as.data.frame(do.call(rbind, lapply(test_s4_dedup_all8$X.Uploaded_variation, getDatFormat)))[,1:5]
+names(muts_DS3_all8) <- c("SampleID", "chr", "pos", "ref", "mut") 
+muts_DS3_all8$SampleID <- "DS3"
+
+muts_DS6_all8 <- as.data.frame(do.call(rbind, lapply(test_s5_dedup_all8$X.Uploaded_variation, getDatFormat)))[,1:5]
+names(muts_DS6_all8) <- c("SampleID", "chr", "pos", "ref", "mut") 
+muts_DS6_all8$SampleID <- "DS6"
+
+muts_DS7_all8 <- as.data.frame(do.call(rbind, lapply(test_s6_dedup_all8$X.Uploaded_variation, getDatFormat)))[,1:5]
+names(muts_DS7_all8) <- c("SampleID", "chr", "pos", "ref", "mut") 
+muts_DS7_all8$SampleID <- "DS7"
+
+muts_DS8_all8 <- as.data.frame(do.call(rbind, lapply(test_s7_dedup_all8$X.Uploaded_variation, getDatFormat)))[,1:5]
+names(muts_DS8_all8) <- c("SampleID", "chr", "pos", "ref", "mut") 
+muts_DS8_all8$SampleID <- "DS8"
+
+muts_DS9_all8 <- as.data.frame(do.call(rbind, lapply(test_s8_dedup_all8$X.Uploaded_variation, getDatFormat)))[,1:5]
+names(muts_DS9_all8) <- c("SampleID", "chr", "pos", "ref", "mut") 
+muts_DS9_all8$SampleID <- "DS9"
+
+## Put in common dataframe
+muts_all8 <- do.call("rbind", list(muts_VU_all8, muts_MGH_all8,
+                                   muts_BR1_all8, muts_DS3_all8, 
+                                   muts_DS6_all8, muts_DS7_all8, 
+                                   muts_DS8_all8, muts_DS9_all8))
+
+## Run the analysis
+dndsout_all8 = dndscv(muts_all8, refdb="~/git/GES_2020/WES/RefCDS_human_GRCh38.p12.rda", 
+                      cv=NULL, max_muts_per_gene_per_sample = 5)
+all8_keymuts <- subset(dndsout_all8$sel_cv, pglobal_cv < 0.05)
+impGenes_all8 <- subset(dndsout_all8$annotmuts, gene %in% all8_keymuts$gene_name)
+
+## Change dNdScv categorization to more specific scheme (for reviewers)
+impGenes_all8$impact[impGenes_all8$impact == "no-SNV" & !is.na(impGenes_all8$ntchange)] <- sapply(str_split(impGenes_all8$ntchange[impGenes_all8$impact == "no-SNV" & !is.na(impGenes_all8$ntchange)], "-",3), function(x) x[3])
+impGenes_all8 <- subset(impGenes_all8, impact != "no-SNV")
+## Remove gene with mutations in 2+ samples (MUC3A, GOLGA6L7, MADCAM1, GOLGA8F, CHD4, GOLGA6L4, IGFN1) - for reviewers
+muts_remove <- c("MUC3A","GOLGA6L7","MADCAM1","GOLGA8F","CHD4","GOLGA6L4","IGFN1")
+impGenes_all8 <- subset(impGenes_all8, !(gene %in% muts_remove))
+
+## hm gene order; rev(unique(impGenes_all8$gene))
+
+## Plot cell line version cohort (of the mutations identified from joint analysis)
+CLV <- c("VU", "MGH", "BR1")
+impGenes_CLV <- subset(impGenes_all8, sampleID %in% CLV)
+
 ## Setting the color setup for plots below
-matches <- c("Essential_Splice" = "#F8766D", "Missense" = "#A3A500", "no-SNV" = "#00BF7D",
-             "None" = "white", "Nonsense" = "#00B0F6", "Synonymous" = "#E76BF3")
-names <- c("Essential_Splice", "Missense" , "no-SNV", "None", "Nonsense", "Synonymous")
-labels <- c("Essential Splice", "Missense", "Non-SNV", "None", "Nonsense", "Synonymous")
-
-setwd('~/Documents/QuarantaLab/GES_2020/WES/')
-
-## Pull out mutation characteristics
-muts_VU <- as.data.frame(do.call(rbind, lapply(test_s1_dedup$X.Uploaded_variation, getDatFormat)))[,1:5]
-names(muts_VU) <- c("SampleID", "chr", "pos", "ref", "mut") 
-muts_VU$SampleID <- "VU"
-
-muts_MGH <- as.data.frame(do.call(rbind, lapply(test_s2_dedup$X.Uploaded_variation, getDatFormat)))[,1:5]
-names(muts_MGH) <- c("SampleID", "chr", "pos", "ref", "mut") 
-muts_MGH$SampleID <- "MGH"
-
-muts_BR1 <- as.data.frame(do.call(rbind, lapply(test_s3_dedup$X.Uploaded_variation, getDatFormat)))[,1:5]
-names(muts_BR1) <- c("SampleID", "chr", "pos", "ref", "mut") 
-muts_BR1$SampleID <- "BR1"
-
-## Put mutation characteristics from cell line versions (CLV) into common dataframe
-muts_CLV <- do.call("rbind", list(muts_VU, muts_MGH, muts_BR1))
-
-## Run dNdScv (tool to identify key mutations)
-### CV = NULL (because using hg38)
-### Max mutations = threshold (remove hypermutator phenotype)
-dndsout_CLV = dndscv(muts_CLV, refdb="RefCDS_human_GRCh38.p12.rda", 
-                     cv=NULL, max_muts_per_gene_per_sample = 50)
-
-## Pull out important mutations based on p-value threshold
-CLV_keymuts <- subset(dndsout_CLV$sel_cv, pglobal_cv < 0.05) 
-
-## Subset mutations based on important mutations
-impGenes_CLV <- subset(dndsout_CLV$annotmuts, gene %in% CLV_keymuts$gene_name)
+matches <- c("delfrshift" = rainbow(7)[1], "delinframe" = rainbow(7)[2], "Essential_Splice" = rainbow(7)[3],
+             "insfrshift" = rainbow(7)[4], "Missense" = rainbow(7)[5], "Nonsense" = rainbow(7)[6],
+             "Synonymous" = rainbow(7)[7], "None" = "white")
+names <- c("delfrshift", "delinframe" , "Essential_Splice", "insfrshift", 
+           "Missense", "Nonsense", "Synonymous", "None")
+labels <- c("Frameshift Deletion", "Inframe Deletion", "Splice Site", "Frameshift Insertion", 
+            "Missense", "Nonsense", "Synonymous", "None")
 
 ## Creating dataframe-mutation grid (for heatmap plotting)
-CLV <- c("BR1", "MGH", "VU") 
-fillInDF_CLV_dNdS <- expand.grid(unique(impGenes_CLV$gene), CLV)
+fillInDF_CLV_dNdS <- expand.grid(unique(impGenes_all8$gene), CLV)
 names(fillInDF_CLV_dNdS) <- c("gene", "sampleID")
 fillInDF_CLV_dNdS$interaction <- paste0(fillInDF_CLV_dNdS$gene, ":", fillInDF_CLV_dNdS$sampleID)
 
 ## Creating compiled dataframe of mutations, amino acids, and impact
-CLV_all_CG_dNdS <- subset(dndsout_CLV$annotmuts, gene %in% unique(impGenes_CLV$gene))
-CLV_all_CG_dNdS$interaction <- paste0(CLV_all_CG_dNdS$gene, ":", CLV_all_CG_dNdS$sampleID)
+impGenes_CLV$interaction <- paste0(impGenes_CLV$gene, ":", impGenes_CLV$sampleID)
 
 ## Compile new dataframe for each mutated gene, CLV, and impact
-Genes_CLV_dNdS <- merge(fillInDF_CLV_dNdS, CLV_all_CG_dNdS, c("interaction"), all.x = TRUE)
+Genes_CLV_dNdS <- merge(fillInDF_CLV_dNdS, impGenes_CLV, c("interaction"), all.x = TRUE)
 Genes_CLV_dNdS <- Genes_CLV_dNdS[,c("gene.x", "sampleID.x", "impact")]
 Genes_CLV_dNdS[is.na(Genes_CLV_dNdS)] <- "None"
 names(Genes_CLV_dNdS) <- c("gene", "sampleID", "impact")
@@ -888,493 +1040,255 @@ CG_CLV_dNdS_geneCount <- subset(CG_CLV_factor_dNdS, impact != "None") %>%
 
 ### Change from factor to character (for plots)
 CG_CLV_dNdS_geneCount$gene <- as.character(CG_CLV_dNdS_geneCount$gene) 
+CG_CLV_dNdS_geneCount <- as.data.frame(lapply(CG_CLV_dNdS_geneCount, unlist))
+
 
 ## Plot vertical barplot for each gene (gene and impact classified)
-ggplot(CG_CLV_dNdS_geneCount, aes(x = gene, y = n)) +
-  geom_bar(stat = "identity", color = "black", aes(fill = impact), size = 0.25) +
+ggplot() +
+  geom_bar(CG_CLV_dNdS_geneCount, stat = "identity", color = "black", 
+           aes(x = gene, y = n, fill = as.factor(impact)), size = 0.25) +
   theme_bw() + labs(x = "Gene", y = "Number of Mutations") +
   scale_fill_manual(values = matches, breaks = names, labels = labels) +
-  ylim(0,20) + scale_x_discrete(limits = rev(levels(CG_CLV_dNdS_factor_p$gene))) +
+  scale_y_continuous(breaks=seq(0, 5, by = 1)) + 
+  scale_x_discrete(limits = rev(levels(CG_CLV_dNdS_factor_p$gene))) +
   theme(
     panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
     legend.position = "none", axis.ticks = element_blank(),
     # axis.text.x = element_text(size = 8, angle = 90, hjust = 0),
-    plot.title = element_text(size = 12, hjust = 0.5), axis.text=element_text(size=8),
-    legend.title = element_text(size=12), axis.title=element_text(size=10),
+    plot.title = element_text(size = 12, hjust = 0.5), axis.text=element_text(size=12),
+    legend.title = element_text(size=12), axis.title=element_text(size=12),
     axis.title.x=element_blank(), axis.text.x=element_blank(), 
     axis.ticks.x=element_blank(), panel.border = element_blank()) +
   ggsave("FIG_3D_right.pdf", width = 12, height = 2)
 
+plt_test <- ggplot() +
+  geom_bar(CG_CLV_dNdS_geneCount, stat = "identity", color = "black", 
+           aes(x = gene, y = n, fill = as.factor(impact)), size = 0.25) +
+  theme_bw() + labs(x = "Gene", y = "Number of Mutations") +
+  scale_fill_manual(values = matches, breaks = names, labels = labels)
+
+plt_test_leg <- ggpubr::get_legend(plt_test)
+ggpubr::as_ggplot(plt_test_leg) + ggsave("FIG_3D_legend.pdf")
+
+
 ## Plot horizontal barplot for each sample (sample and impact classified)
-ggplot(impGenes_CLV %>% count(sampleID, impact), 
-       aes(x = factor(sampleID, levels = c("BR1", "MGH", "VU")),
-           y = n)) +
-  geom_bar(stat = "identity", color = "black", aes(fill = impact), size = 0.125, width = 0.99) +
+CLV_plot <- impGenes_CLV %>% count(sampleID, impact)
+CLV_plot <- as.data.frame(lapply(CLV_plot, unlist))
+
+ggplot() +
+  geom_bar(CLV_plot, stat = "identity", color = "black", 
+           aes(x = factor(sampleID, levels = c("BR1", "MGH", "VU")),
+               y = n, fill = as.factor(impact)), size = 0.125, width = 0.99) +
   theme_bw() + labs(x = "Sample", y = "Number of Mutations") +
   scale_fill_manual(values = matches, breaks = names, labels = labels) +
-  ylim(0,225) + 
+  scale_y_continuous(breaks=seq(0, 30, by = 10)) + 
   theme(
     panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
     legend.position = "none", axis.ticks = element_blank(),
-    axis.text.x = element_text(size = 8, angle = 90, hjust = 0),
-    plot.title = element_text(size = 12, hjust = 0.5), axis.text=element_text(size=8),
-    legend.title = element_text(size=12), axis.title=element_text(size=10),
+    axis.text.x = element_blank(),
+    plot.title = element_text(size = 12, hjust = 0.5), axis.text=element_text(size=12),
+    legend.title = element_text(size=12), axis.title=element_text(size=12),
     panel.border = element_blank()) +
   ggsave("FIG_3D_top.pdf", width = 6, height = 3)
 
 ## Add character and numeric indecies for heatmap plotting
-e <- unique(c(as.character(CG_CLV_dNdS_factor_p$sampleID)))
+e <- rev(unique(c(as.character(CG_CLV_dNdS_factor_p$sampleID))))
 f <- as.numeric(factor(CG_CLV_dNdS_factor_p$sampleID, levels=e))
 
 ## Plot heatmap of mutations and CLV (colored by impact and number of mutations)
 ### Separated bars within sample bars are if multiple mutation impacts in same CLV
+CG_CLV_dNdS_factor_p <- as.data.frame(lapply(CG_CLV_dNdS_factor_p, unlist))
+
 ggplot(CG_CLV_dNdS_factor_p, (aes(x = gene, y = f + shift,
-                                  fill = impact, alpha = n, height = height))) + 
-  geom_tile(color = "black", aes(fill = impact, alpha = n)) + theme_bw() + 
+                                  fill = as.factor(impact), alpha = n, height = height))) + 
+  geom_tile(color = "black", aes(fill = as.factor(impact), alpha = n)) + theme_bw() + 
   labs(x = "Genes", y = "Sample") +
-  scale_alpha(range = c(0.5,1), limits = c(1,12), name = "Number of\nMutations") +
-  scale_y_continuous(breaks = c(1,2,3), 
-                     labels = e) +
+  scale_alpha(range = c(1,1), limits = c(1,3), name = "Number of\nMutations") +
+  scale_y_continuous(breaks = c(1,2,3), labels = e) +
   coord_flip() +
-  scale_fill_manual(values = matches, breaks = names, 
+  scale_fill_manual(values = matches, breaks = names,
                     labels = labels) +
   theme(
     panel.grid.major = element_blank(), #panel.grid.minor = element_blank(),
     legend.position = "none", axis.ticks = element_blank(),
     panel.border=element_rect(fill = NA, colour="white",size=0.2),
-    axis.text.y = element_text(size = 8),
-    # axis.text.x = element_text(size = 6, angle = 90, hjust = 0),
-    plot.title = element_text(size = 12, hjust = 0.5), axis.text=element_text(size=12),
-    legend.title = element_text(size=12), axis.title=element_text(size=12)) + 
+    axis.text.y = element_blank(),
+    plot.title = element_text(size = 12, hjust = 0.5), axis.text=element_text(size=16),
+    legend.title = element_text(size=12), axis.title=element_text(size=16)) + 
   ggsave("FIG_3D_middle.pdf", width = 6, height = 12)
 
-## Cancer-associated gene list
+## Export gene list to csv - Supplementary Table S2
+
+### Sublines
+
+sublines <- c("DS3", "DS6", "DS7", "DS8", "DS9")
+impGenes_sublines <- subset(impGenes_all8, sampleID %in% sublines)
+
+## Creating dataframe-mutation grid (for heatmap plotting)
+fillInDF_sublines_dNdS <- expand.grid(unique(impGenes_all8$gene), sublines)
+names(fillInDF_sublines_dNdS) <- c("gene", "sampleID")
+fillInDF_sublines_dNdS$interaction <- paste0(fillInDF_sublines_dNdS$gene, ":", fillInDF_sublines_dNdS$sampleID)
+
+## Creating compiled dataframe of mutations, amino acids, and impact
+impGenes_sublines$interaction <- paste0(impGenes_sublines$gene, ":", impGenes_sublines$sampleID)
+
+## Compile new dataframe for each mutated gene, sublines, and impact
+Genes_sublines_dNdS <- merge(fillInDF_sublines_dNdS, impGenes_sublines, c("interaction"), all.x = TRUE)
+Genes_sublines_dNdS <- Genes_sublines_dNdS[,c("gene.x", "sampleID.x", "impact")]
+Genes_sublines_dNdS[is.na(Genes_sublines_dNdS)] <- "None"
+names(Genes_sublines_dNdS) <- c("gene", "sampleID", "impact")
+
+## Tally number of mutations for each sample-gene pair
+CG_sublines_factor_dNdS <- Genes_sublines_dNdS %>% modify_if(is.character, as.factor)
+CG_sublines_factor_dNdS_count <- CG_sublines_factor_dNdS %>% 
+  group_by(gene, sampleID, impact) %>% 
+  tally() 
+
+## Add shift and height column (annotations to heatmap)
+CG_sublines_dNdS_factor_p <- data.table(CG_sublines_factor_dNdS_count)
+CG_sublines_dNdS_factor_p[, shift:=(1:(.N))/.N - 1/(2 * .N) - 1/2, by=list(gene, sampleID)]
+CG_sublines_dNdS_factor_p[, height:=1/.N, by=list(gene, sampleID)]
+
+## Add character and numeric indecies for heatmap plotting
+k <- unique(c(as.character(CG_sublines_dNdS_factor_p$sampleID)))
+l <- as.numeric(factor(CG_sublines_dNdS_factor_p$sampleID, levels=k)) 
+
+## Create gene count dataframe (for vertical heatmap bar plot)
+CG_sublines_dNdS_geneCount <- subset(CG_sublines_factor_dNdS, impact != "None") %>% 
+  group_by(gene, impact) %>% 
+  tally() 
+
+### Change from factor to character (for plots)
+CG_sublines_dNdS_geneCount$gene <- as.character(CG_sublines_dNdS_geneCount$gene) 
+CG_sublines_dNdS_geneCount <- as.data.frame(lapply(CG_sublines_dNdS_geneCount, unlist))
+
+## Plot vertical barplot for each gene (gene and impact classified)
+ggplot() +
+  geom_bar(CG_sublines_dNdS_geneCount, stat = "identity", color = "black", 
+           aes(x = gene, y = n, fill = as.factor(impact)), size = 0.25) +
+  theme_bw() + labs(x = "Gene", y = "Number of Mutations") +
+  scale_fill_manual(values = matches, breaks = names, labels = labels) +
+  scale_y_continuous(breaks=seq(0, 5, by = 1)) + ylim(0,5) +
+  scale_x_discrete(limits = rev(levels(CG_sublines_dNdS_factor_p$gene))) +
+  theme(
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    legend.position = "none", axis.ticks = element_blank(),
+    plot.title = element_text(size = 12, hjust = 0.5), axis.text=element_text(size=12),
+    legend.title = element_text(size=12), axis.title=element_text(size=12),
+    axis.title.x=element_blank(), axis.text.x=element_blank(), 
+    axis.ticks.x=element_blank(), panel.border = element_blank()) +
+  ggsave("FIG_4D_right.pdf", width = 12, height = 2)
+
+## Plot horizontal barplot for each sample (sample and impact classified)
+sublines_plot <- impGenes_sublines %>% count(sampleID, impact)
+sublines_plot <- as.data.frame(lapply(sublines_plot, unlist))
+
+ggplot() +
+  geom_bar(sublines_plot, stat = "identity", color = "black", 
+           aes(x = factor(sampleID, levels = rev(sublines)),
+               y = n, fill = as.factor(impact)), size = 0.125, width = 0.99) +
+  theme_bw() + labs(x = "Sample", y = "Number of Mutations") +
+  scale_fill_manual(values = matches, breaks = names, labels = labels) +
+  scale_y_continuous(breaks=seq(0, 30, by = 10)) + ylim(0,30) +
+  theme(
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    legend.position = "none", axis.ticks = element_blank(),
+    axis.text.x = element_blank(),
+    plot.title = element_text(size = 12, hjust = 0.5), axis.text=element_text(size=12),
+    legend.title = element_text(size=12), axis.title=element_text(size=12),
+    panel.border = element_blank()) +
+  ggsave("FIG_4D_top.pdf", width = 6, height = 3)
+
+## Add character and numeric indecies for heatmap plotting
+e <- rev(unique(c(as.character(CG_sublines_dNdS_factor_p$sampleID))))
+f <- as.numeric(factor(CG_sublines_dNdS_factor_p$sampleID, levels=e))
+
+## Plot heatmap of mutations and sublines (colored by impact and number of mutations)
+### Separated bars within sample bars are if multiple mutation impacts in same sublines
+CG_sublines_dNdS_factor_p <- as.data.frame(lapply(CG_sublines_dNdS_factor_p, unlist))
+
+ggplot(CG_sublines_dNdS_factor_p, (aes(x = gene, y = f + shift,
+                                       fill = as.factor(impact), alpha = n, height = height))) + 
+  geom_tile(color = "black", aes(fill = as.factor(impact), alpha = n)) + theme_bw() + 
+  labs(x = "Genes", y = "Sample") +
+  scale_alpha(range = c(1,1), limits = c(1,5), name = "Number of\nMutations") +
+  scale_y_continuous(breaks = rev(seq(5)), labels = e) +
+  coord_flip() +
+  scale_fill_manual(values = matches, breaks = names,
+                    labels = labels) +
+  theme(
+    panel.grid.major = element_blank(), #panel.grid.minor = element_blank(),
+    legend.position = "none", axis.ticks = element_blank(),
+    panel.border=element_rect(fill = NA, colour="white",size=0.2),
+    axis.text.y = element_blank(),
+    # axis.text.x = element_text(size = 6, angle = 90, hjust = 0),
+    plot.title = element_text(size = 12, hjust = 0.5), axis.text=element_text(size=16),
+    legend.title = element_text(size=12), axis.title=element_text(size=16)) + 
+  ggsave("FIG_4D_middle.pdf", width = 6, height = 12)
+
+
+### Plot Cancer Associated Genes
+## Cancer gene list
 cancerGenes <- c("EGFR", "MET", "HER2", "BRAF", "NF1", "RAF1", "KRAS", "NRAS", "HRAS", "MAP2K2", 
                  "AKT1", "PIK3CA", "PIK3CB", "TSC1", "ALK", "APC", "EPHA2", "EPHA3", "EPHA4",
                  "ERBB4", "FGFR1", "ITK", "JAK2", "JAK3", "LRP1B", "LTK", "ROS1", "STK11", "TP53", "RB1", 
                  "ABCB5", "CFTR", "DACH1", "RELN", "CDKN2A", "DDR2", "DLEC1", "IRF1", "KEAP1", "MAP2K1",
                  "MAP3K8", "NRG1", "PPP2R1B", "PRKN", "PTEN", "RASSF1", "RET", "RIT1", "SLC22A18", "SMARCA4")
 
-## Create new empty heatmap dataframe for cancer-associated gene mutations
-fillInDF_CLV_CG <- expand.grid(cancerGenes, CLV)
-names(fillInDF_CLV_CG) <- c("gene", "sampleID")
-fillInDF_CLV_CG$interaction <- paste0(fillInDF_CLV_CG$gene, ":", fillInDF_CLV_CG$sampleID)
+## Create empty dataframe
+all8 <- c("BR1", "MGH", "VU", "DS3", "DS6", "DS7", "DS8", "DS9")
+fillInDF_all8_CG <- expand.grid(cancerGenes, all8)
+names(fillInDF_all8_CG) <- c("gene", "sampleID")
+fillInDF_all8_CG$interaction <- paste0(fillInDF_all8_CG$gene, ":", fillInDF_all8_CG$sampleID)
 
-## Annotate cancer-gene associated mutation dataframe
-CLV_all_CG <- subset(dndsout_CLV$annotmuts, gene %in% cancerGenes)
-CLV_all_CG$interaction <- paste0(CLV_all_CG$gene, ":", CLV_all_CG$sampleID)
+## Subset data for cancer genes
+all8_all_CG <- subset(dndsout_all8$annotmuts, gene %in% cancerGenes)
+all8_all_CG$impact[all8_all_CG$impact == "no-SNV" & !is.na(all8_all_CG$ntchange)] <- sapply(str_split(all8_all_CG$ntchange[all8_all_CG$impact == "no-SNV" & !is.na(all8_all_CG$ntchange)], "-",3), function(x) x[3])
+all8_all_CG <- subset(all8_all_CG, impact != "no-SNV")
+all8_all_CG$interaction <- paste0(all8_all_CG$gene, ":", all8_all_CG$sampleID)
 
-## Create dataframe of genes, sample name, and impact for each CLV
-cancerGenes_CLV <- merge(fillInDF_CLV_CG, CLV_all_CG, c("interaction"), all.x = TRUE)
-cancerGenes_CLV <- cancerGenes_CLV[,c("gene.x", "sampleID.x", "impact")]
-cancerGenes_CLV[is.na(cancerGenes_CLV)] <- "None"
-names(cancerGenes_CLV) <- c("gene", "sampleID", "impact")
+## Merge two dataframes together
+cancerGenes_all8 <- merge(fillInDF_all8_CG, all8_all_CG, c("interaction"), all.x = TRUE)
+cancerGenes_all8 <- cancerGenes_all8[,c("gene.x", "sampleID.x", "impact")]
+cancerGenes_all8[is.na(cancerGenes_all8)] <- "None"
+names(cancerGenes_all8) <- c("gene", "sampleID", "impact")
 
-## Convert character columns to factors
-CG_CLV_factor <- cancerGenes_CLV %>% modify_if(is.character, as.factor)
-
-## Tally the number of gene-sample-impact pairs
-CG_CLV_factor <- CG_CLV_factor %>% 
+## Tally the total number of mutations for each interaction group
+test_f <- cancerGenes_all8 %>% modify_if(is.character, as.factor)
+test_f <- test_f %>% 
   group_by(gene, sampleID, impact) %>% 
   tally()
 
-## Calculating height and shift columns (if gene-sample pairs have more than one impact type)
-CG_CLV_factor_p <- data.table(CG_CLV_factor)
-CG_CLV_factor_p[, shift:=(1:(.N))/.N - 1/(2 * .N) - 1/2, by=list(gene, sampleID)]
-CG_CLV_factor_p[, height:=1/.N, by=list(gene, sampleID)]
+# Plot together
+test_f_all_p <- data.table(test_f)
+test_f_all_p[, shift:=(1:(.N))/.N - 1/(2 * .N) - 1/2, by=list(gene, sampleID)]
+test_f_all_p[, height:=1/.N, by=list(gene, sampleID)]
 
-## Create character and numeric indecies (for plots below)
-i <- unique(c(as.character(CG_CLV_factor_p$sampleID)))
-j <- as.numeric(factor(CG_CLV_factor_p$sampleID, levels=i))
+## Create indecies
+i <- unique(c(as.character(test_f_all_p$sampleID)))
+j <- as.numeric(factor(test_f_all_p$sampleID, levels=i))
 
-## Plot cancer-associated gene heatmap
-ggplot(CG_CLV_factor_p, (aes(x = gene, y = j + shift,
-                             fill = impact, alpha = n, height = height))) + 
+## Plot
+ggplot(test_f_all_p, (aes(x = gene, y = j + shift,
+                          fill = impact, alpha = n, height = height))) + 
   geom_tile(color = "black", aes(fill = impact, alpha = n)) + theme_bw() + 
-  labs(x = "Cancer Genes", y = "Sample") +
-  scale_alpha(range = c(0.5,1), limits = c(1,12)) +
-  scale_y_continuous(breaks = c(1,2,3), 
-                     labels = i) + coord_flip() +
-  scale_x_discrete(limits = rev(levels(CG_CLV_factor_p$gene))) +
-  scale_fill_manual(values = matches, breaks = names, labels = labels) +
-  theme(
-    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-    legend.position = "none", axis.ticks = element_blank(),
-    panel.border=element_rect(fill = NA, colour="white",size=0.2),
-    # axis.text.x = element_text(size = 8, angle = 90, hjust = 0),
-    axis.text.y = element_text(size = 8),
-    plot.title = element_text(size = 12, hjust = 0.5), axis.text=element_text(size=12),
-    legend.title = element_text(size=12), axis.title=element_text(size=12)) + 
-  ggsave("FIG_3E.pdf", width = 9, height = 5)
-
-
-## Generate heatmaps for sublines using same genes from CLV
-### Pull out specific information from subline unique mutation lists (without DS8)
-muts_DS3_noDS8 <- as.data.frame(do.call(rbind, lapply(test_s4_dedup_noDS8$X.Uploaded_variation, getDatFormat)))[,1:5]
-names(muts_DS3_noDS8) <- c("SampleID", "chr", "pos", "ref", "mut") 
-muts_DS3_noDS8$SampleID <- "DS3"
-
-muts_DS6_noDS8 <- as.data.frame(do.call(rbind, lapply(test_s5_dedup_noDS8$X.Uploaded_variation, getDatFormat)))[,1:5]
-names(muts_DS6_noDS8) <- c("SampleID", "chr", "pos", "ref", "mut") 
-muts_DS6_noDS8$SampleID <- "DS6"
-
-muts_DS7_noDS8 <- as.data.frame(do.call(rbind, lapply(test_s6_dedup_noDS8$X.Uploaded_variation, getDatFormat)))[,1:5]
-names(muts_DS7_noDS8) <- c("SampleID", "chr", "pos", "ref", "mut") 
-muts_DS7_noDS8$SampleID <- "DS7"
-
-muts_DS9_noDS8 <- as.data.frame(do.call(rbind, lapply(test_s8_dedup_noDS8$X.Uploaded_variation, getDatFormat)))[,1:5]
-names(muts_DS9_noDS8) <- c("SampleID", "chr", "pos", "ref", "mut") 
-muts_DS9_noDS8$SampleID <- "DS9"
-
-## Bind subline dataframes together
-muts_sublines_noDS8 <- do.call("rbind", list(muts_DS3_noDS8, muts_DS6_noDS8, muts_DS7_noDS8, muts_DS9_noDS8))
-
-## Run dNdScv on the subline dataframe (not to identify mutation list, but to annotate with 
-## amino acids, impact, location, etc.)
-dndsout_sublines_noDS8 = dndscv(muts_sublines_noDS8, refdb="RefCDS_human_GRCh38.p12.rda", 
-                                cv=NULL, max_muts_per_gene_per_sample = 50)
-
-## Pull out mutations in genes from the CLV dNdScv gene list
-impGenes_sublines_noDS8_in3 <- subset(dndsout_sublines_noDS8$annotmuts, 
-                                      gene %in% CLV_keymuts$gene_name)
-
-## Generate subline list (without DS8)
-sublines_noDS8 <- c("DS3", "DS6", "DS7", "DS9")
-
-## Empty dataframe creation (same as above)
-fillInDF_sublines_noDS8_in3_dNdS <- expand.grid(CLV_keymuts$gene_name, sublines_noDS8)
-names(fillInDF_sublines_noDS8_in3_dNdS) <- c("gene", "sampleID")
-fillInDF_sublines_noDS8_in3_dNdS$interaction <- paste0(fillInDF_sublines_noDS8_in3_dNdS$gene, ":", 
-                                                       fillInDF_sublines_noDS8_in3_dNdS$sampleID)
-
-## Subset mutations based on those in CLV list
-sublines_noDS8_in3_all_CG_dNdS <- subset(dndsout_sublines_noDS8$annotmuts, 
-                                         gene %in% CLV_keymuts$gene_name)
-sublines_noDS8_in3_all_CG_dNdS$interaction <- paste0(sublines_noDS8_in3_all_CG_dNdS$gene, 
-                                                     ":", sublines_noDS8_in3_all_CG_dNdS$sampleID)
-
-## Create compiled dataframe of gene, sample, and impact
-genes_sublines_noDS8_in3_dNdS <- merge(fillInDF_sublines_noDS8_in3_dNdS, 
-                                       sublines_noDS8_in3_all_CG_dNdS, c("interaction"), all.x = TRUE)
-genes_sublines_noDS8_in3_dNdS <- genes_sublines_noDS8_in3_dNdS[,c("gene.x", "sampleID.x", "impact")]
-genes_sublines_noDS8_in3_dNdS[is.na(genes_sublines_noDS8_in3_dNdS)] <- "None"
-names(genes_sublines_noDS8_in3_dNdS) <- c("gene", "sampleID", "impact")
-
-## Convert character columns to factors
-CG_sublines_noDS8_in3_factor_dNdS <- genes_sublines_noDS8_in3_dNdS %>% modify_if(is.character, as.factor)
-
-## Tally gene-sample-impact pairs
-CG_sublines_noDS8_in3_factor_dNdS_count <- CG_sublines_noDS8_in3_factor_dNdS %>% 
-  group_by(gene, sampleID, impact) %>% 
-  tally()
-
-## Creating columns to show multiple mutation impacts in each sample-gene pair
-CG_sublines_noDS8_in3_dNdS_factor_p <- data.table(CG_sublines_noDS8_in3_factor_dNdS_count)
-CG_sublines_noDS8_in3_dNdS_factor_p[, shift:=(1:(.N))/.N - 1/(2 * .N) - 1/2, by=list(gene, sampleID)]
-CG_sublines_noDS8_in3_dNdS_factor_p[, height:=1/.N, by=list(gene, sampleID)]
-
-## Modifying dataframe to assist in counts (below)
-CG_sublines_noDS8_in3_dNdS_factor_p$gene <- as.character(CG_sublines_noDS8_in3_dNdS_factor_p$gene)
-CG_sublines_noDS8_dNdScvCLV_geneCount <- within(CG_sublines_noDS8_in3_dNdS_factor_p, n[n == 1 & impact == "None"] <- 0)
-CG_sublines_noDS8_dNdScvCLV_geneCount <- CG_sublines_noDS8_dNdScvCLV_geneCount[, .(count = .N, var = sum(n)), by = list(gene, impact)]
-CG_sublines_noDS8_dNdScvCLV_geneCount <- within(CG_sublines_noDS8_dNdScvCLV_geneCount, count[impact == "None"] <- 0)
-
-## Plot gene count barplot (vertical) for sublines (annotated by impact)
-ggplot(CG_sublines_noDS8_dNdScvCLV_geneCount, aes(x = gene, y = count)) +
-  geom_bar(stat = "identity", color = "black", aes(fill = impact), size = 0.25) +
-  theme_bw() + labs(x = "Gene", y = "Number of Mutations") +
-  scale_fill_manual(values = matches, breaks = names, labels = labels) +
-  ylim(0,20) + scale_x_discrete(limits = rev(levels(CG_CLV_dNdS_factor_p$gene))) +
-  theme(
-    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-    legend.position = "none", axis.ticks = element_blank(),
-    plot.title = element_text(size = 12, hjust = 0.5), axis.text=element_text(size=8),
-    legend.title = element_text(size=12), axis.title=element_text(size=10),
-    axis.title.x=element_blank(), axis.text.x=element_blank(), 
-    axis.ticks.x=element_blank(), panel.border = element_blank()) +
-  ggsave("FIG_4D_right.pdf", width = 12, height = 2)
-
-## Plot subline count barplot (horizontal) for genes (annotated by impact)
-ggplot(impGenes_sublines_noDS8_in3 %>% count(sampleID, impact), 
-       aes(x = factor(sampleID, levels = c("DS3", "DS6", "DS7", "DS9")),
-           y = n)) +
-  geom_bar(stat = "identity", color = "black", aes(fill = impact), size = 0.125, width = 0.99) +
-  theme_bw() + labs(x = "Sample", y = "Number of Mutations") +
-  scale_fill_manual(values = matches, breaks = names, labels = labels) +
-  ylim(0,225) + 
-  theme(
-    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-    legend.position = "none", axis.ticks = element_blank(),
-    axis.text.x = element_text(size = 8, angle = 90, hjust = 0),
-    plot.title = element_text(size = 12, hjust = 0.5), axis.text=element_text(size=8),
-    legend.title = element_text(size=12), axis.title=element_text(size=10),
-    panel.border = element_blank()) +
-  ggsave("FIG_4D_top.pdf", width = 6, height = 3)
-
-## Create character and numeric indecies (for below plot)
-a <- unique(c(as.character(CG_sublines_noDS8_in3_dNdS_factor_p$sampleID)))
-b <- as.numeric(factor(CG_sublines_noDS8_in3_dNdS_factor_p$sampleID, levels=a))
-
-## Plot subline mutations for CLV distinguishing genes (colored by impact and number of mutations)
-ggplot(CG_sublines_noDS8_in3_dNdS_factor_p, aes(x = gene, y = b + shift,
-                                                fill = impact, alpha = n, height = height)) + 
-  geom_tile(color = "black", aes(fill = impact, alpha = n)) + theme_bw() + 
-  labs(x = "Genes (Distinguishing Cell Line Versions)", y = "Sample") +
-  scale_alpha(range = c(0.5,1), limits = c(1,12), name = "Number of\nMutations") +
-  scale_y_continuous(breaks = c(1,2,3,4), 
-                     labels = a) + 
-  scale_x_discrete(limits = levels(CG_CLV_dNdS_factor_p$gene)) +
+  labs(x = "Unique Cancer Genes", y = "Sample") +
+  scale_alpha(range = c(1,1)) +
+  scale_y_continuous(breaks = c(1,2,3,4,5,6,7,8), 
+                     labels = i) +
   coord_flip() +
   scale_fill_manual(values = matches, breaks = names, labels = labels) +
   theme(
-    panel.grid.major = element_blank(),
-    legend.position = "none", axis.ticks = element_blank(),
+    panel.grid.major = element_blank(), #panel.grid.minor = element_blank(),
+    legend.position = "right", axis.ticks = element_blank(),
     panel.border=element_rect(fill = NA, colour="white",size=0.2),
-    axis.text.y = element_text(size = 8),
-    plot.title = element_text(size = 12, hjust = 0.5), axis.text=element_text(size=12),
-    legend.title = element_text(size=12), axis.title=element_text(size=12)) + 
-  ggsave("FIG_4D_middle.pdf", width = 6, height = 12)
+    axis.text.y = element_text(size = 12), legend.text = element_text(size = 16),
+    plot.title = element_text(size = 12, hjust = 0.5), axis.text=element_text(size=16),
+    legend.title = element_text(size=12), axis.title=element_text(size=16)) + 
+  ggsave("FIG_S4A.pdf", width = 12, height = 12)
 
-## Create cancer-associated gene signature dataframe for sublines (without DS8)
-fillInDF_sublines_noDS8_in3 <- expand.grid(cancerGenes, sublines_noDS8)
-names(fillInDF_sublines_noDS8_in3) <- c("gene", "sampleID")
-fillInDF_sublines_noDS8_in3$interaction <- paste0(fillInDF_sublines_noDS8_in3$gene, ":", 
-                                                  fillInDF_sublines_noDS8_in3$sampleID)
-
-## Annotate cancer-associated mutation data by gene and sample (for below)
-sublines_noDS8_in3_all_CG <- subset(dndsout_sublines_noDS8$annotmuts, gene %in% cancerGenes)
-sublines_noDS8_in3_all_CG$interaction <- paste0(sublines_noDS8_in3_all_CG$gene, 
-                                                ":", sublines_noDS8_in3_all_CG$sampleID)
-
-## Annotate signature dataframe with mutation data
-cancerGenes_sublines_noDS8_in3 <- merge(fillInDF_sublines_noDS8_in3, sublines_noDS8_in3_all_CG, 
-                                        c("interaction"), all.x = TRUE)
-cancerGenes_sublines_noDS8_in3 <- cancerGenes_sublines_noDS8_in3[,c("gene.x", "sampleID.x", "impact")]
-cancerGenes_sublines_noDS8_in3[is.na(cancerGenes_sublines_noDS8_in3)] <- "None"
-names(cancerGenes_sublines_noDS8_in3) <- c("gene", "sampleID", "impact")
-
-## Modify character columns to factors (for below)
-CG_sublines_noDS8_in3_factor <- cancerGenes_sublines_noDS8_in3 %>% modify_if(is.character, as.factor)
-
-## Count number of gene-sample-impact pairs
-CG_sublines_noDS8_in3_factor <- CG_sublines_noDS8_in3_factor %>% 
-  group_by(gene, sampleID, impact) %>% 
-  tally()
-
-## Create column for spacing in heatmap (if multiple impacts for each gene-sample pair)
-CG_sublines_noDS8_in3_factor_p <- data.table(CG_sublines_noDS8_in3_factor)
-CG_sublines_noDS8_in3_factor_p[, shift:=(1:(.N))/.N - 1/(2 * .N) - 1/2, by=list(gene, sampleID)]
-CG_sublines_noDS8_in3_factor_p[, height:=1/.N, by=list(gene, sampleID)]
-
-## Add indecies (for plotting)
-c <- unique(c(as.character(CG_sublines_noDS8_in3_factor_p$sampleID)))
-d <- as.numeric(factor(CG_sublines_noDS8_in3_factor_p$sampleID, levels=c))
-
-ggplot(CG_sublines_noDS8_in3_factor_p, (aes(x = gene, y = d + shift,
-                                            fill = impact, alpha = n, height = height))) + 
-  geom_tile(color = "black", aes(fill = impact, alpha = n)) + theme_bw() + 
-  coord_flip() +
-  scale_x_discrete(limits = rev(levels(CG_CLV_factor_p$gene))) +
-  labs(x = "Cancer Genes", y = "Sample") +
-  scale_alpha(range = c(0.5,1), limits = c(1,12)) +
-  scale_y_continuous(breaks = c(1,2,3,4), 
-                     labels = c) +
-  scale_fill_manual(values = matches, breaks = names, labels = labels) +
-  theme(
-    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-    legend.position = "none", axis.ticks = element_blank(),
-    panel.border=element_rect(fill = NA, colour="white",size=0.2),
-    axis.text.y = element_text(size = 8),
-    plot.title = element_text(size = 12, hjust = 0.5), axis.text=element_text(size=12),
-    legend.title = element_text(size=12), axis.title=element_text(size=12)) + 
-  ggsave("FIG_4E.pdf", width = 9, height = 5)
-
-
-## Create mutation lists of sublines (including DS8, for input into dNdScv)
-muts_DS3 <- as.data.frame(do.call(rbind, lapply(test_s4_dedup$X.Uploaded_variation, getDatFormat)))[,1:5]
-names(muts_DS3) <- c("SampleID", "chr", "pos", "ref", "mut") 
-muts_DS3$SampleID <- "DS3"
-
-muts_DS6 <- as.data.frame(do.call(rbind, lapply(test_s5_dedup$X.Uploaded_variation, getDatFormat)))[,1:5]
-names(muts_DS6) <- c("SampleID", "chr", "pos", "ref", "mut") 
-muts_DS6$SampleID <- "DS6"
-
-muts_DS7 <- as.data.frame(do.call(rbind, lapply(test_s6_dedup$X.Uploaded_variation, getDatFormat)))[,1:5]
-names(muts_DS7) <- c("SampleID", "chr", "pos", "ref", "mut") 
-muts_DS7$SampleID <- "DS7"
-
-muts_DS8 <- as.data.frame(do.call(rbind, lapply(test_s7_dedup$X.Uploaded_variation, getDatFormat)))[,1:5]
-names(muts_DS8) <- c("SampleID", "chr", "pos", "ref", "mut") 
-muts_DS8$SampleID <- "DS8"
-
-muts_DS9 <- as.data.frame(do.call(rbind, lapply(test_s8_dedup$X.Uploaded_variation, getDatFormat)))[,1:5]
-names(muts_DS9) <- c("SampleID", "chr", "pos", "ref", "mut") 
-muts_DS9$SampleID <- "DS9"
-
-## Bind sublines together
-muts_sublines <- do.call("rbind", list(muts_DS3, muts_DS6, muts_DS7, muts_DS8, muts_DS9))
-
-## Run dNdScv on sublines (just to annotate mutations)
-dndsout_sublines = dndscv(muts_sublines, refdb="RefCDS_human_GRCh38.p12.rda", 
-                          cv=NULL, max_muts_per_gene_per_sample = 50)
-
-## Subset mutations by CLV mutation list
-impGenes_sublines_in3 <- subset(dndsout_sublines$annotmuts, gene %in% CLV_keymuts$gene_name)
-
-## Enumerate subline list
-sublines <- c("DS3", "DS6", "DS7", "DS8", "DS9")
-
-## Create empty dataframe 
-fillInDF_sublines_in3_dNdS <- expand.grid(CLV_keymuts$gene_name, sublines)
-names(fillInDF_sublines_in3_dNdS) <- c("gene", "sampleID")
-fillInDF_sublines_in3_dNdS$interaction <- paste0(fillInDF_sublines_in3_dNdS$gene, ":", 
-                                                 fillInDF_sublines_in3_dNdS$sampleID)
-
-## Annotate mutation data with sample-gene pair
-sublines_in3_all_CG_dNdS <- subset(dndsout_sublines$annotmuts, gene %in% CLV_keymuts$gene_name)
-sublines_in3_all_CG_dNdS$interaction <- paste0(sublines_in3_all_CG_dNdS$gene, ":", sublines_in3_all_CG_dNdS$sampleID)
-
-## Merge two datasframes to generate new dataframe
-genes_sublines_in3_dNdS <- merge(fillInDF_sublines_in3_dNdS, 
-                                 sublines_in3_all_CG_dNdS, c("interaction"), all.x = TRUE)
-genes_sublines_in3_dNdS <- genes_sublines_in3_dNdS[,c("gene.x", "sampleID.x", "impact")]
-genes_sublines_in3_dNdS[is.na(genes_sublines_in3_dNdS)] <- "None"
-names(genes_sublines_in3_dNdS) <- c("gene", "sampleID", "impact")
-
-## Change character columns into factors
-CG_sublines_in3_factor_dNdS <- genes_sublines_in3_dNdS %>% modify_if(is.character, as.factor)
-
-## Count the number of gene-sample-impact pairs
-CG_sublines_in3_factor_dNdS_count <- CG_sublines_in3_factor_dNdS %>% 
-  group_by(gene, sampleID, impact) %>% 
-  tally()
-
-## Add columns that split heatmap cells if multiple impact types
-CG_sublines_in3_dNdS_factor_p <- data.table(CG_sublines_in3_factor_dNdS_count)
-CG_sublines_in3_dNdS_factor_p[, shift:=(1:(.N))/.N - 1/(2 * .N) - 1/2, by=list(gene, sampleID)]
-CG_sublines_in3_dNdS_factor_p[, height:=1/.N, by=list(gene, sampleID)]
-
-## Modify dataframe so it's easier to plot below
-CG_sublines_in3_dNdS_factor_p$gene <- as.character(CG_sublines_in3_dNdS_factor_p$gene)
-CG_sublines_dNdScvCLV_geneCount <- within(CG_sublines_in3_dNdS_factor_p, n[n == 1 & impact == "None"] <- 0)
-CG_sublines_dNdScvCLV_geneCount <- CG_sublines_dNdScvCLV_geneCount[, .(count = .N, var = sum(n)), by = list(gene, impact)]
-CG_sublines_dNdScvCLV_geneCount <- within(CG_sublines_dNdScvCLV_geneCount, count[impact == "None"] <- 0)
-
-## Plot mutation count for each gene for sublines (inculding DS8)
-ggplot(CG_sublines_dNdScvCLV_geneCount, aes(x = gene, y = count)) +
-  geom_bar(stat = "identity", color = "black", aes(fill = impact), size = 0.25) +
-  theme_bw() + labs(x = "Gene", y = "Number of Mutations") +
-  scale_fill_manual(values = matches, breaks = names, labels = labels) +
-  ylim(0,20) + scale_x_discrete(limits = rev(levels(CG_CLV_dNdS_factor_p$gene))) +
-  theme(
-    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-    legend.position = "none", axis.ticks = element_blank(),
-    # axis.text.x = element_text(size = 8, angle = 90, hjust = 0),
-    plot.title = element_text(size = 12, hjust = 0.5), axis.text=element_text(size=8),
-    legend.title = element_text(size=12), axis.title=element_text(size=10),
-    axis.title.x=element_blank(), axis.text.x=element_blank(), 
-    axis.ticks.x=element_blank(), panel.border = element_blank()) +
-  ggsave("FIG_S10B_right.pdf", width = 12, height = 2)
-
-## Plot mutation count for each subline across all genes (including DS8)
-ggplot(impGenes_sublines_in3 %>% count(sampleID, impact), 
-       aes(x = factor(sampleID, levels = c("DS3", "DS6", "DS7", "DS8", "DS9")),
-           y = n)) +
-  geom_bar(stat = "identity", color = "black", aes(fill = impact), size = 0.125, width = 0.99) +
-  theme_bw() + labs(x = "Sample", y = "Number of Mutations") +
-  scale_fill_manual(values = matches, breaks = names, labels = labels) +
-  ylim(0,225) + 
-  theme(
-    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-    legend.position = "none", axis.ticks = element_blank(),
-    axis.text.x = element_text(size = 8, angle = 90, hjust = 0),
-    plot.title = element_text(size = 12, hjust = 0.5), axis.text=element_text(size=8),
-    legend.title = element_text(size=12), axis.title=element_text(size=10),
-    panel.border = element_blank()) +
-  ggsave("FIG_S10B_top.pdf", width = 6, height = 3)
-
-## Identify indecies for plots below
-w <- unique(c(as.character(CG_sublines_in3_dNdS_factor_p$sampleID)))
-x <- as.numeric(factor(CG_sublines_in3_dNdS_factor_p$sampleID, levels=w))
-
-## Plot subline (including DS8) heatmap (CLV genes)
-ggplot(CG_sublines_in3_dNdS_factor_p, (aes(x = gene, y = x + shift,
-                                           fill = impact, alpha = n, height = height))) + 
-  geom_tile(color = "black", aes(fill = impact, alpha = n)) + theme_bw() + 
-  labs(x = "Genes (Distinguishing Cell Line Versions)", y = "Sample") +
-  scale_alpha(range = c(0.5,1), limits = c(1,12), name = "Number of\nMutations") +
-  scale_y_continuous(breaks = c(1,2,3,4,5), 
-                     labels = w) + 
-  scale_x_discrete(limits = levels(CG_CLV_dNdS_factor_p$gene)) +
-  coord_flip() +
-  scale_fill_manual(values = matches, breaks = names, labels = labels) +
-  theme(
-    panel.grid.major = element_blank(), 
-    legend.position = "none", axis.ticks = element_blank(),
-    panel.border=element_rect(fill = NA, colour="white",size=0.2),
-    # axis.text.x = element_text(size = 8, angle = 90, hjust = 0),
-    axis.text.y = element_text(size = 8),
-    plot.title = element_text(size = 12, hjust = 0.5), axis.text=element_text(size=12),
-    legend.title = element_text(size=12), axis.title=element_text(size=12)) + 
-  ggsave("FIG_S10B_middle.pdf", width = 6, height = 12)
-
-## Calculate cancer-associated heatmap for sublines (including DS8)
-### Create open dataframe
-fillInDF_sublines_in3 <- expand.grid(cancerGenes, sublines)
-names(fillInDF_sublines_in3) <- c("gene", "sampleID")
-fillInDF_sublines_in3$interaction <- paste0(fillInDF_sublines_in3$gene, 
-                                            ":", fillInDF_sublines_in3$sampleID)
-
-## Subset for only cancer genes
-sublines_in3_all_CG <- subset(dndsout_sublines$annotmuts, gene %in% cancerGenes)
-sublines_in3_all_CG$interaction <- paste0(sublines_in3_all_CG$gene, ":", sublines_in3_all_CG$sampleID)
-
-## Annotate open dataframe with cancer gene information
-cancerGenes_sublines_in3 <- merge(fillInDF_sublines_in3, sublines_in3_all_CG, c("interaction"), all.x = TRUE)
-cancerGenes_sublines_in3 <- cancerGenes_sublines_in3[,c("gene.x", "sampleID.x", "impact")]
-cancerGenes_sublines_in3[is.na(cancerGenes_sublines_in3)] <- "None"
-# cancerGenes_clones_noDS8$n[is.na(cancerGenes_clones_noDS8$n)] <- 0
-# cancerGenes_clones_noDS8 <- cancerGenes_clones_noDS8[,c(2,3,6)]
-names(cancerGenes_sublines_in3) <- c("gene", "sampleID", "impact")
-
-## Convert character columns to factors
-CG_sublines_in3_factor <- cancerGenes_sublines_in3 %>% modify_if(is.character, as.factor)
-
-## Count the number of gene-sample-impact pairs
-CG_sublines_in3_factor <- CG_sublines_in3_factor %>% 
-  group_by(gene, sampleID, impact) %>% 
-  tally()
-
-## Add shift and height columns (for positioning on heatmap below)
-CG_sublines_in3_factor_p <- data.table(CG_sublines_in3_factor)
-CG_sublines_in3_factor_p[, shift:=(1:(.N))/.N - 1/(2 * .N) - 1/2, by=list(gene, sampleID)]
-CG_sublines_in3_factor_p[, height:=1/.N, by=list(gene, sampleID)]
-
-## Create indecies for plots below
-y <- unique(c(as.character(CG_sublines_in3_factor_p$sampleID)))
-z <- as.numeric(factor(CG_sublines_in3_factor_p$sampleID, levels=y))
-
-ggplot(CG_sublines_in3_factor_p, (aes(x = gene, y = z + shift,
-                                      fill = impact, alpha = n, height = height))) + 
-  geom_tile(color = "black", aes(fill = impact, alpha = n)) + theme_bw() + 
-  labs(x = "Cancer Genes", y = "Sample") +
-  scale_alpha(range = c(0.5,1), limits = c(1,12)) +
-  scale_y_continuous(breaks = c(1,2,3,4,5), 
-                     labels = y) +
-  coord_flip() +
-  scale_x_discrete(limits = rev(levels(CG_CLV_factor_p$gene))) +
-  scale_fill_manual(values = matches, breaks = names, labels = labels) +
-  theme(
-    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-    legend.position = "none", axis.ticks = element_blank(),
-    panel.border=element_rect(fill = NA, colour="white",size=0.2),
-    axis.text.y = element_text(size = 8),
-    plot.title = element_text(size = 12, hjust = 0.5), axis.text=element_text(size=12),
-    legend.title = element_text(size=12), axis.title=element_text(size=12)) + 
-  ggsave("FIG_S10C.pdf", width = 5, height = 7)
-
-# Save data for GO semantic similarity analysis
-save(test_s1_dedup, test_s2_dedup, test_s3_dedup,
-     test_s4_dedup_noDS8, test_s5_dedup_noDS8, test_s6_dedup_noDS8, test_s8_dedup_noDS8,
-     test_s4_dedup, test_s5_dedup, test_s6_dedup, test_s7_dedup, test_s8_dedup,
-     file = "../GO/variants_byCohort.RData")
+# # Save data for GO semantic similarity analysis
+# save(test_s1_dedup, test_s2_dedup, test_s3_dedup,
+#      test_s4_dedup_noDS8, test_s5_dedup_noDS8, test_s6_dedup_noDS8, test_s8_dedup_noDS8,
+#      test_s4_dedup, test_s5_dedup, test_s6_dedup, test_s7_dedup, test_s8_dedup,
+#      file = "../GO/variants_byCohort.RData")
