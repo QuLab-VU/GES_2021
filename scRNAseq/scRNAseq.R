@@ -1,16 +1,21 @@
-# devtools::install_version(package = 'Seurat', version = package_version('2.3.4'))
-# BiocManager::install("AnnotationDbi")
-# BiocManager::install("org.Hs.eg.db")
-library(Seurat) # Use version 2.3.4 for the code below to work
+library(Seurat) # version 2.3.4 to create file hashed dataframes; 3.x to run analysis
 library(Matrix)
 library(AnnotationDbi)
+library(DoubletFinder)
+library(ggplot2)
+library(ggpubr)
+library(factoextra)
+library(NbClust)
+library(clusterProfiler)
+library(org.Hs.eg.db)
+library(VISION)
+library(limma)
+library(stringr)
+library(data.table)
 library("org.Hs.eg.db")
+setwd('~/git/GES_2020/scRNAseq')
 
-setwd('~/Documents/QuarantaLab/GES_2020/scRNAseq/')
-
-# Read in hashtag oligonucleotide (HTO) library
-## This matrix includes all 8 HTOs. This library comes
-## from the CITEseq Count function (see Methods and HTO_count.txt file)
+# Read in hashing data
 matrix_dir = "umi_count/"
 barcode.path <- paste0(matrix_dir, "barcodes.tsv.gz")
 features.path <- paste0(matrix_dir, "features.tsv.gz")
@@ -22,10 +27,8 @@ colnames(mat) = barcode.names$V1
 rownames(mat) = feature.names$V1
 dat_HTO <- mat
 
-# Read in single-cell RNAseq count data
-## This count matrix will include all 8 samples. Output from Cell Ranger.
-##Annotation with hashing labels below.
-matrix_dir_rna = "/Volumes/quaranta/Data/RNAseq/PC9_scRNAseq/outs/filtered_feature_bc_matrix/"
+# Read in scRNAseq data
+matrix_dir_rna = "read_count/"
 barcode.path_rna <- paste0(matrix_dir_rna, "barcodes.tsv.gz")
 features.path_rna <- paste0(matrix_dir_rna, "features.tsv.gz")
 matrix.path_rna <- paste0(matrix_dir_rna, "matrix.mtx.gz")
@@ -38,12 +41,8 @@ colnames(mat_rna) = sapply(barcodes_raw, function(x) strsplit(x, "-")[[1]][1],
 rownames(mat_rna) = feature.names_rna$V1
 dat_expr <- mat_rna
 
-## Save d for separate ENSG id conversion
+# Add rownames to RNA dataframe
 d <- as.data.frame(as.matrix(dat_expr))
-save(d, dat_HTO, file = "GEdata_ensgid.RData")
-
-# Add gene symbols as row names for single-cell count matrix
-## Replace Ensembl gene IDs with HGNC gene symbols (if possible)
 d$SYMBOL <- mapIds(org.Hs.eg.db,keys=rownames(dat_expr),
                    column="SYMBOL",keytype="ENSEMBL",multiVals="first")
 
@@ -52,349 +51,504 @@ rownames(dat_expr) <- make.names(ifelse(is.na(d$SYMBOL),
                                         d$SYMBOL),
                                  unique = TRUE)
 
-# Keep only the same cell barcodes in the HTO dataframe
-# between gene expression and HTO libraries
+# Keep barcodes shared between dataframes
 joint_bcs <- intersect(colnames(dat_expr),colnames(dat_HTO))
 dat_expr <- dat_expr[,joint_bcs]
 dat_HTO <- as.matrix(dat_HTO[,joint_bcs])
 
+# save(dat_expr, dat_HTO, file = "/Volumes/Flash/preSeurat_DD.RData")
+# load('/Volumes/Flash/preSeurat_DD.RData')
+
 # Setup Seurat object
-dat_hashtag <- CreateSeuratObject(dat_expr, project = "PC9_hashing")
+dat_hashtag <- CreateSeuratObject(counts = dat_expr)
 
 # Normalize RNA data with log normalization
-dat_hashtag <- NormalizeData(dat_hashtag,display.progress = FALSE)
+dat_hashtag <- NormalizeData(dat_hashtag)
+# Find and scale variable features
+dat_hashtag <- FindVariableFeatures(dat_hashtag, selection.method = "mean.var.plot")
+dat_hashtag <- ScaleData(dat_hashtag, features = VariableFeatures(dat_hashtag))
+dat_hashtag <- CellCycleScoring(dat_hashtag, s.features = cc.genes.updated.2019$s.genes, 
+                                g2m.features = cc.genes.updated.2019$g2m.genes, 
+                                set.ident = FALSE)
 
-# Identify and scale variable genes 
-dat_hashtag <- FindVariableGenes(dat_hashtag,do.plot = T,
-                                    display.progress = FALSE)
+# Add HTO data as a new assay independent from RNA
+dat_hashtag[["HTO"]] <- CreateAssayObject(counts = dat_HTO)
+# Normalize HTO data, here we use centered log-ratio (CLR) transformation
+dat_hashtag <- NormalizeData(dat_hashtag, assay = "HTO", normalization.method = "CLR")
 
-# length(dat_hashtag@var.genes) # Identify the number of variable genes
-dat_hashtag <- ScaleData(dat_hashtag,
-                         genes.use = dat_hashtag@var.genes,
-                         display.progress = FALSE)
+# Demultiplex HTO data using default settings
+dat_hashtag <- HTODemux(dat_hashtag, assay = "HTO", positive.quantile = 0.99)
 
-# Add hashtag count dataframe to assay data
-dat_hashtag <- SetAssayData(dat_hashtag,
-                            assay.type = "HTO",
-                            slot = "raw.data",
-                            new.data = dat_HTO)
+# # Save demultiplexed matrix as a CSV file (for Reviewer #1)
+# data_to_write_out <- as.data.frame(as.matrix(dat_hashtag@assays$RNA@counts))
+# fwrite(x = data_to_write_out, row.names = TRUE, col.names = TRUE, file = "PC9_scRNAseqCounts_HTOdemux.csv")
 
-# Apply special normalization method to HTO libraries
-dat_hashtag <- NormalizeData(dat_hashtag, assay.type = "HTO",
-                             normalization.method = "genesCLR",
-                             display.progress = FALSE)
-
-# Basically, add the HTO information to the gene expression data
-dat_hashtag <- HTODemux(dat_hashtag,
-                        assay.type = "HTO",
-                        positive_quantile =  0.99,
-                        print.output = FALSE)
-
-# Some sanity checks for multiplets and hashtags
-# print (table(dat_hashtag@meta.data$hto_classification_global))
-# print (table(dat_hashtag@meta.data$hto_classification))
-
-# Plot hashtag representation for each hashtag library
-## Changed axis label colors and subplot titles in external softward
-dat_hashtag <- SetAllIdent(dat_hashtag,id = "hash_maxID")
-RidgePlot(dat_hashtag,
-          features.plot = rownames(GetAssayData(dat_hashtag,assay.type = "HTO")),
-          nCol = 3, cols = c("blue", "green", "red", "brown", 
-                             "deeppink", "darkorchid", "seagreen", "gold")) + 
-  ggsave("FIG_S13.pdf", width = 15, height = 15)
+# Group cells based on the max HTO signal
+Idents(dat_hashtag) <- "HTO_maxID"
+RidgePlot(dat_hashtag, assay = "HTO", features = rownames(dat_hashtag[["HTO"]]),
+          ncol = 3, cols = c("green", "seagreen", "darkorchid", "red", "blue", 
+                             "gold", "brown", "deeppink")) + 
+  ggsave("FIG_S15.pdf", width = 15, height = 15)
 
 
-# Annotate gene expression dataset with most likely HTO classification
-dat_hashtag <- SetAllIdent(dat_hashtag,"hto_classification_global")
+# Run dimensionality reduction on all cells
+dat_hashtag <- RunPCA(dat_hashtag, features = VariableFeatures(dat_hashtag))
+dat_hashtag <- FindNeighbors(dat_hashtag, reduction = "pca", dims = 1:10)
+dat_hashtag <- FindClusters(dat_hashtag, resolution = 0.6, verbose = FALSE)
+dat_hashtag <- RunTSNE(dat_hashtag, reduction = "pca", dims = 1:10)
+dat_hashtag <- RunUMAP(dat_hashtag, dims = 1:10)
+# Projecting singlet identities on UMAP visualization
+DimPlot(dat_hashtag, reduction = "umap", group.by = "HTO_classification") 
 
-# Do same normalization techniques on singlet-only dataset
-## Extract the singlets
-dat_singlet <- SubsetData(dat_hashtag,ident.use = "Singlet")
+# Classify cells by primary HTO
+Idents(dat_hashtag) <- "HTO_classification.global"
 
-## Select the most variable genes - This is FIG. S6B (saved as 4x5 PDF)
-dat_singlet <- FindVariableGenes(dat_singlet, do.plot = TRUE,
-                                 display.progress = FALSE)
+# Identify predicted doublets using doubletFinder
+## Not remove until later - just for plotting
+sweep.res.list_dat_hashtag <- paramSweep_v3(dat_hashtag, PCs = 1:10)
+sweep.stats_dat_hashtag <- summarizeSweep(sweep.res.list_dat_hashtag, GT = FALSE)
+bcmvn_dat_hashtag <- find.pK(sweep.stats_dat_hashtag)
 
-# Scaling gene expression data
-dat_singlet <- ScaleData(dat_singlet, 
-                         genes.use = dat_singlet@var.genes,
-                         display.progress = FALSE)
+homotypic.prop_dat_hashtag <- modelHomotypic(annotations = dat_hashtag@meta.data$seurat_clusters)
+nExp_poi_dat_hashtag <- round(0.05*nrow(dat_hashtag@meta.data))
+nExp_poi.adj <- round(nExp_poi_dat_hashtag*(1-homotypic.prop_dat_hashtag))
 
-# Run PCA
-dat_singlet <- RunPCA(dat_singlet,
-                      pc.genes = dat_singlet@var.genes,
-                      pcs.print = 0)
+dat_hashtag <- doubletFinder_v3(dat_hashtag, PCs = 1:10, pN = 0.25,
+                                pK = 0.09, nExp = nExp_poi_dat_hashtag, 
+                                reuse.pANN = FALSE)
 
-# Run tSNE
-dat_singlet <- RunTSNE(dat_singlet, reduction.use = "pca",
-                       dims.use = 1:10)
+found_dH <- match(dat_hashtag@meta.data$HTO_classification,
+                  old_tags)
+met_dH <- data.frame(ifelse(is.na(found_dH), dat_hashtag@meta.data$HTO_classification,
+                            new_tags[found_dH]), row.names = rownames(dat_hashtag@meta.data))
+names(met_dH) <- "Population"
+dat_hashtag <- AddMetaData(dat_hashtag, met_dH, 'Population')
+dat_SDP <- FetchData(dat_hashtag, vars = c("UMAP_1", "UMAP_2", "nCount_RNA", "nFeature_RNA",
+                                           "HTO_classification.global",
+                                           "DF.classifications_0.25_0.09_737",
+                                           "Population"))
 
-# Run UMAP
-dat_singlet <- RunUMAP(dat_singlet, reduction.use = "pca", dims.use = 1:10)
+dat_SDP$HTO_type <- paste0("HTO", "-", dat_SDP$HTO_classification.global)
+dat_SDP$DD_type <- paste0("DD", "-", dat_SDP$DF.classifications_0.25_0.09_737)
+dat_SDP$Quality <- ifelse(dat_SDP$nCount_RNA > 15000 & dat_SDP$nFeature_RNA > 3000, 
+                          "Good", "Poor")
 
-# Changing Annotations on Plots from hashtag ID to sample name
-## Add sample names as metadata
-dat_singlet_clusters <- dat_singlet
-old_tags <- c('HTO_A-GTCAACTCTTTAGCG',
-              'HTO_B-TGATGGCCTATTGGG',
-              'HTO_C-TTCCGCCTCTCTTTG',
-              'HTO_D-AGTAAGTTCAGCGTA',
-              'HTO_E-AAGTATCGTTTCGCA',
-              'HTO_F-GGTTGCCAGATGTCA',
-              'HTO_G-TGTCTTTCCTGCCAG',
-              'HTO_H-CTCCTCTGCAATTAC')
-new_tags <- c('VU', 'MGH', 'BR1', 'DS3',
-              'DS6', 'DS7', 'DS8', 'DS9')
-found <- match(dat_singlet_clusters@meta.data$hto_classification,
+dat_SDP_singlet <- subset(dat_SDP, Population %in% c("VU", "MGH", "BR1", "DS3",
+                                                     "DS6", "DS7", "DS8", "DS9"))
+
+# Plot doublets (both types) and poor quality cells with singlets
+## HTO singlet/doublet
+plt_HTO <- ggplot() + theme_bw() +
+  geom_density_2d(data = dat_SDP_singlet,
+                  aes(x=UMAP_1, y=UMAP_2,
+                      color = Population), 
+                  alpha = 0.8) +
+  scale_color_manual(values = c("red", "brown", "deeppink", "darkorchid",
+                                "seagreen", "gold", "green", "blue")) +
+  geom_point(data = dat_SDP, shape = 21, alpha = 0.7,
+             aes(x = UMAP_1, y = UMAP_2, fill = HTO_type),
+             size = 0.8, stroke = 0.01) + 
+  scale_fill_manual(values = c("grey10", "grey90")) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        axis.text = element_text(size = 12), legend.position = "none", 
+        legend.text = element_text(size = 12), legend.title = element_text(size=12), 
+        axis.title=element_text(size=12))
+
+plt_HTO + ggsave("FIG_S16A.svg", width = 4, height = 3)
+plt_HTO_leg <- ggpubr::get_legend(plt_HTO)
+as_ggplot(plt_HTO_leg) + ggsave("FIG_S16A_legend.svg",
+                                width = 2.5, height = 4)
+
+## DD singlet/doublet
+plt_DD <- ggplot() + theme_bw() +
+  geom_density_2d(data = dat_SDP_singlet,
+                  aes(x=UMAP_1, y=UMAP_2,
+                      color = Population), 
+                  alpha = 0.8) +
+  scale_color_manual(values = c("red", "brown", "deeppink", "darkorchid",
+                                "seagreen", "gold", "green", "blue")) +
+  geom_point(data = dat_SDP, shape = 21, alpha = 0.7,
+             aes(x = UMAP_1, y = UMAP_2, fill = DD_type),
+             size = 0.8, stroke = 0.01) + 
+  scale_fill_manual(values = c("grey10", "grey90")) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        axis.text = element_text(size = 12), legend.position = "none", 
+        legend.text = element_text(size = 12), legend.title = element_text(size=12), 
+        axis.title=element_text(size=12))
+
+plt_DD + ggsave("FIG_S16B.svg", width = 4, height = 3)
+plt_DD_leg <- ggpubr::get_legend(plt_DD)
+as_ggplot(plt_DD_leg) + ggsave("FIG_S16B_legend.svg",
+                               width = 2.5, height = 4)
+
+## Cutoff good/bad cells
+plt_qual <- ggplot() + theme_bw() +
+  geom_density_2d(data = dat_SDP_singlet,
+                  aes(x=UMAP_1, y=UMAP_2,
+                      color = Population), 
+                  alpha = 0.8) +
+  scale_color_manual(values = c("red", "brown", "deeppink", "darkorchid",
+                                "seagreen", "gold", "green", "blue")) +
+  geom_point(data = dat_SDP, shape = 21, alpha = 0.7,
+             aes(x = UMAP_1, y = UMAP_2, fill = Quality),
+             size = 0.8, stroke = 0.01) + 
+  scale_fill_manual(values = c("grey90", "grey10")) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        axis.text = element_text(size = 12), legend.position = "none", 
+        legend.text = element_text(size = 12), legend.title = element_text(size=12), 
+        axis.title=element_text(size=12))
+
+plt_qual + ggsave("FIG_S16C.svg", width = 4, height = 3)
+plt_qual_leg <- ggpubr::get_legend(plt_qual)
+as_ggplot(plt_qual_leg) + ggsave("FIG_S16C_legend.svg",
+                                 width = 2.5, height = 4)
+
+# Extract the singlets (predicted by Seurat)
+dat_singlet <- subset(dat_hashtag, idents = "Singlet")
+# Select the most variable features
+dat_singlet <- FindVariableFeatures(dat_singlet, selection.method = "mean.var.plot")
+VariableFeaturePlot(dat_singlet) + ggsave("FIG_S5B.svg", 
+                                          width = 7, height = 4)
+# Scaling RNA data, only scale the variable features here for efficiency
+dat_singlet <- ScaleData(dat_singlet, features = VariableFeatures(dat_singlet))
+# Run dimensionality reduction on singlets only
+dat_singlet <- RunPCA(dat_singlet, features = VariableFeatures(dat_singlet))
+dat_singlet <- FindNeighbors(dat_singlet, reduction = "pca", dims = 1:10)
+dat_singlet <- FindClusters(dat_singlet, resolution = 0.6, verbose = FALSE)
+dat_singlet <- RunTSNE(dat_singlet, reduction = "pca", dims = 1:10)
+dat_singlet <- RunUMAP(dat_singlet, dims = 1:10)
+# Projecting singlet identities on UMAP visualization
+DimPlot(dat_singlet, reduction = "umap", group.by = "HTO_classification") 
+
+# Identify predicted doublets - Doublet Finder
+sweep.res.list_dat_singlet <- paramSweep_v3(dat_singlet, PCs = 1:10)
+sweep.stats_dat_singlet <- summarizeSweep(sweep.res.list_dat_singlet, GT = FALSE)
+bcmvn_dat_singlet <- find.pK(sweep.stats_dat_singlet)
+
+homotypic.prop <- modelHomotypic(annotations = dat_singlet@meta.data$seurat_clusters)
+nExp_poi <- round(0.05*nrow(dat_singlet@meta.data))
+nExp_poi.adj <- round(nExp_poi*(1-homotypic.prop))
+
+dat_singlet <- doubletFinder_v3(dat_singlet, PCs = 1:10, pN = 0.25,
+                                pK = 0.09, nExp = nExp_poi, 
+                                reuse.pANN = FALSE)
+
+old_tags <- c("HTO-A-GTCAACTCTTTAGCG",
+              "HTO-B-TGATGGCCTATTGGG",
+              "HTO-C-TTCCGCCTCTCTTTG",
+              "HTO-D-AGTAAGTTCAGCGTA",
+              "HTO-E-AAGTATCGTTTCGCA",
+              "HTO-F-GGTTGCCAGATGTCA",
+              "HTO-G-TGTCTTTCCTGCCAG",
+              "HTO-H-CTCCTCTGCAATTAC")
+new_tags <- c("VU", "MGH", "BR1", "DS3",
+              "DS6", "DS7", "DS8", "DS9")
+found <- match(dat_singlet@meta.data$HTO_classification,
                old_tags)
-met <- data.frame(ifelse(is.na(found), dat_singlet_clusters@meta.data$hto_classification,
-              new_tags[found]), row.names = rownames(dat_singlet_clusters@meta.data))
+met <- data.frame(ifelse(is.na(found), dat_singlet@meta.data$HTO_classification,
+                         new_tags[found]), row.names = rownames(dat_singlet@meta.data))
 names(met) <- "Population"
-dat_singlet_clusters <- AddMetaData(dat_singlet_clusters, met,
-                                    'Population')
+dat_singlet <- AddMetaData(dat_singlet, met, 'Population')
 
-# Plot dimensionality reduction approaches
-PCAPlot(dat_singlet_clusters, group.by = "Population") + 
-  scale_color_manual(values = c("red", "brown", "deeppink", "darkorchid", 
+# Remove doublets (predicted and multiple cell hashtags)
+dat_singlet_doubRem <- subset(dat_singlet, DF.classifications_0.25_0.09_490 == "Singlet" &
+                                HTO_classification.global == "Singlet")
+
+# # Identify cell quality
+# test <- FetchData(dat_singlet_doubRem, 
+#                   vars = c("nCount_RNA", "nFeature_RNA", "Population", "seurat_clusters"))
+# 
+# test %>%
+#   group_by(seurat_clusters) %>%
+#   dplyr::summarize(Mean = mean(nCount_RNA, na.rm=TRUE))
+
+# Remove low quality cells
+## Weak - used for inferCNV detection - maximize number of cells
+dat_singlet_doubRem_poorRem <- subset(dat_singlet_doubRem,
+                                      nCount_RNA > 10000 &
+                                        nFeature_RNA > 2000)
+
+# save(dat_singlet_doubRem_poorRem, file = "inferCNV/Seurat_v3_scRNAseq_forInferCNV.RData")
+
+## Strong - used for plotting and clustering
+dat_singlet_doubRem_poorRem_ex <- subset(dat_singlet_doubRem,
+                                         nCount_RNA > 15000 &
+                                           nFeature_RNA > 3000)
+
+# save(dat_singlet_doubRem_poorRem_ex, dat_hashtag,
+#      file = "Seurat_v3_scRNAseq_Paper.RData")
+# load("Seurat_v3_scRNAseq_Paper.RData")
+
+# Plots
+# UMAP - CLV, CLV density + sublines dots
+## UMAP - by Population
+plt_all_UMAP <- DimPlot(dat_singlet_doubRem_poorRem_ex, reduction = "umap", group.by = "Population") +
+  scale_color_manual(values = c("red", "brown", "deeppink", "darkorchid",
                                 "seagreen", "gold", "green", "blue")) +
-  ggsave("FIG_S7C.svg", width = 6, height = 4)
+  theme_bw() +
+  theme(legend.position = "none",
+        axis.text = element_text(size=12), legend.text = element_text(size=12),
+        axis.title = element_text(size=12), panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
 
-TSNEPlot(dat_singlet_clusters,group.by = "Population") +
-  scale_color_manual(values = c("red", "brown", "deeppink", "darkorchid", 
-                                "seagreen", "gold", "green", "blue")) +
-  ggsave("FIG_S7B.svg", width = 6, height = 4)
+# ## All samples - not in paper
+# plt_all_UMAP + ggsave("UMAP_PopColored.svg", width = 4, height = 3)
+# plt_all_UMAP_leg <- ggpubr::get_legend(plt_all_UMAP)
+# as_ggplot(plt_all_UMAP_leg) + ggsave("UMAP_PopColored_legend.svg",
+#                                      width = 2.5, height = 4)
 
-DimPlot(dat_singlet_clusters, reduction.use = "umap", group.by = "Population") +
-  scale_color_manual(values = c("red", "brown", "deeppink", "darkorchid", 
-                                "seagreen", "gold", "green", "blue")) +
-  ggsave("FIG_S7A.svg", width = 6, height = 4)
 
-# Make sample ID the main cell identity
-dat_singlet_clusters <- SetAllIdent(dat_singlet_clusters, id = "Population")
+## UMAP - by Population - only CLV
+dat_CLV <- subset(dat_singlet_doubRem_poorRem_ex, Population %in% c("VU", "MGH", "BR1"))
+CLV_plotDat <- FetchData(dat_CLV, vars = c("UMAP_1", "UMAP_2", "Population"))
 
-# Plot cell line versions (CLV) in space of all samples
-## Subset only cell line versions
-dat_singlet_CLV <- SubsetData(object = dat_singlet_clusters, 
-                              ident.use=c("VU", "MGH", "BR1"))
-DimPlot(dat_singlet_CLV, reduction.use = "umap", group.by = "Population") +
+plt_CLV <- ggplot(CLV_plotDat, 
+                  aes(x = UMAP_1, y = UMAP_2,
+                      color = Population)) +
+  geom_point(size = 0.5) +
   scale_color_manual(values = c("red", "green", "blue")) +
+  theme_bw() +
   theme(legend.position = "none",
-        plot.title = element_text(size = 14, hjust = 0.5, face = "bold"), 
-        axis.text=element_text(size=14), legend.title = element_text(size=14), 
-        axis.title=element_text(size=14), panel.grid.major = element_blank(), 
-        panel.grid.minor = element_blank()) +
-  ggsave("FIG_3G_left.svg", width = 6, height = 4)
+        axis.text = element_text(size=12), legend.text = element_text(size=12),
+        axis.title = element_text(size=12), panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
 
-# Plot sublines (not including DS8) in space of all samples
-## Subset only sublines (not DS8)
-dat_singlet_Sublines_noDS8 <- SubsetData(object = dat_singlet_clusters, 
-                              ident.use=c("DS3", "DS6", "DS7", "DS9"))
-DimPlot(dat_singlet_Sublines_noDS8, reduction.use = "umap", group.by = "Population") +
-  scale_color_manual(values = c("brown", "deeppink", "darkorchid", "gold")) +
-  theme(legend.position = "none",
-        plot.title = element_text(size = 14, hjust = 0.5, face = "bold"), 
-        axis.text=element_text(size=14), legend.title = element_text(size=14), 
-        axis.title=element_text(size=14), panel.grid.major = element_blank(), 
-        panel.grid.minor = element_blank()) +
-  ggsave("FIG_4G_left.svg", width = 6, height = 4)
+plt_CLV + ggsave("FIG_3F.svg", width = 4, height = 3)
+plt_CLV_leg <- ggpubr::get_legend(plt_CLV)
+as_ggplot(plt_CLV_leg) + ggsave("FIG_3F_legend.svg",
+                                width = 2.5, height = 4)
 
-# Plot sublines in space of all samples
-## Subset only sublines - highlight DS8
-dat_singlet_Sublines <- SubsetData(object = dat_singlet_clusters, 
-                                   ident.use=c("DS3", "DS6", "DS7", "DS8", "DS9"))
-tint <- data.frame(ifelse(dat_singlet_Sublines@meta.data$Population == "DS8", 1, 0.3), 
-                   row.names = rownames(dat_singlet_Sublines@meta.data))
-names(tint) <- "Tint"
-dat_singlet_Sublines <- AddMetaData(dat_singlet_Sublines,
-                                    tint, 'Tint')
-DimPlot(dat_singlet_Sublines, reduction.use = "umap", group.by = "Population") +
-  scale_color_manual(values = c("brown", "deeppink", "darkorchid", "seagreen", "gold")) +
-  theme(legend.position = "none",
-        plot.title = element_text(size = 14, hjust = 0.5, face = "bold"), 
-        axis.text=element_text(size=14), legend.title = element_text(size=14), 
-        axis.title=element_text(size=14), panel.grid.major = element_blank(), 
-        panel.grid.minor = element_blank()) +
-  ggsave("RNA_UMAP_PopColored_Sublines_in8.svg", width = 6, height = 4)
+## UMAP - by Population - sublines with CLV underlay
+dat_sublines <- subset(dat_singlet_doubRem_poorRem_ex, Population %in% c("DS3", "DS6", "DS7", "DS8", "DS9"))
+sublines_plotDat <- FetchData(dat_sublines, vars = c("UMAP_1", "UMAP_2", "Population"))
 
-## Make non-DS8 cells less transparent
-dat_sublines_test <- data.frame(dat_singlet_Sublines@dr$umap@cell.embeddings)
-dat_sublines_test$Population <- dat_singlet_Sublines@meta.data$Population[match(row.names(dat_sublines_test),
-                                                                                row.names(dat_singlet_Sublines@meta.data))]
-dat_sublines_test$Tint <- ifelse(dat_sublines_test$Population == "DS8", 1, 0.15)
-cols <- c("DS3" = "brown", "DS6" = "deeppink", "DS7" = "darkorchid", 
-            "DS8" = "seagreen", "DS9" = "gold")
-labs <- c("DS3", "DS6", "DS7", "DS8", "DS9")
+plt_sublines_CLVoverlay <- ggplot() + theme_bw() +
+  geom_density_2d(data = CLV_plotDat, 
+                  aes(x = UMAP_1, y = UMAP_2,
+                      color = Population), alpha = 0.8) +
+  scale_color_manual(values = c("red", "green", "blue")) +
+  geom_point(data = sublines_plotDat, shape = 21,
+             aes(x = UMAP_1, y = UMAP_2, fill = Population),
+             size = 0.8, stroke = 0.01) + 
+  scale_fill_manual(values = c("brown", "deeppink", "darkorchid",
+                               "seagreen", "gold")) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        axis.text = element_text(size = 12), legend.position = "none", 
+        legend.text = element_text(size = 12), legend.title = element_text(size=12), 
+        axis.title=element_text(size=12)) 
 
-ggplot(dat_sublines_test, aes(x = UMAP1, y = UMAP2, color = Population, alpha = Tint)) +
-  geom_point() + scale_alpha_continuous(range = c(0.15,1)) +
-  theme_bw() + 
-  scale_color_manual(values = cols, labels = labs) +
-  theme(
-    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-    axis.text.x = element_text(size = 14, colour = "black"),
-    axis.text.y = element_text(size = 14, colour = "black"),
-    legend.position = "none",
-    plot.title = element_text(size = 16, hjust = 0.5, face = "bold"), axis.text=element_text(size=14),
-    legend.title = element_text(size=14), axis.title=element_text(size=14)) +
-  ggsave("FIG_6C.svg", width = 6, height = 4)
+plt_sublines_CLVoverlay + ggsave("FIG_4F.svg", 
+                                 width = 4, height = 3)
+plt_sublines_CLVoverlay_leg <- ggpubr::get_legend(plt_sublines_CLVoverlay)
+as_ggplot(plt_sublines_CLVoverlay_leg) + ggsave("FIG_4F_legend.svg", 
+                                                width = 2.5, height = 4)
 
+## UMAP - by cell cycle phase
+dat_all8 <- subset(dat_singlet_doubRem_poorRem_ex, Population %in% c("VU", "MGH", "BR1", "DS3", 
+                                                                     "DS6", "DS7", "DS8", "DS9"))
+all8_plotDat <- FetchData(dat_all8, vars = c("UMAP_1", "UMAP_2", "Population", "Phase"))
 
-# Run centroid calculations in common UMAP space
-## Subset only UMAP values
-umap_vals <- as.data.frame(GetCellEmbeddings(object = dat_singlet_clusters, reduction.type = "umap"))
-umap_vals_df <- dplyr::bind_rows(umap_vals)
-colnames(umap_vals_df) <- c("UMAP1", "UMAP2")
-pops_all <- subset(dat_singlet_clusters@meta.data, select = c("Population"))
-umap_vals_df$Population <- unlist(pops_all)
+plt_UMAP_CCphase <- ggplot(data = all8_plotDat, 
+                           aes(x = UMAP_1, y = UMAP_2)) + theme_bw() +
+  geom_density_2d(aes(color = Population), alpha = 0.8) +
+  scale_color_manual(values = c("red", "brown", "deeppink", "darkorchid",
+                                "seagreen", "gold", "green", "blue")) +
+  geom_point(shape = 21, aes(fill = Phase), size = 0.8, stroke = 0.01) + 
+  scale_fill_manual(values = c("#999999", "#E69F00", "#56B4E9")) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        axis.text = element_text(size = 12), legend.position = "none", 
+        legend.text = element_text(size = 12), legend.title = element_text(size=12), 
+        axis.title=element_text(size=12)) 
 
-## Calculate UMAP centroids for each sample
-UMAP1_centroid <- tapply(umap_vals_df$UMAP1, umap_vals_df$Population, mean)
-UMAP2_centroid <- tapply(umap_vals_df$UMAP2, umap_vals_df$Population, mean)
+plt_UMAP_CCphase + ggsave("FIG_S11.svg", 
+                          width = 4, height = 3)
+plt_UMAP_CCphase_leg <- ggpubr::get_legend(plt_UMAP_CCphase)
+as_ggplot(plt_UMAP_CCphase_leg) + ggsave("FIG_S11_leg.svg", 
+                                         width = 2.5, height = 4)
 
-## Combine centroids into 2D dataframe
-centroid <- data.frame(UMAP1 <- UMAP1_centroid, UMAP2 <- UMAP2_centroid)
+## T-SNE - by Population
+dat_singlet_doubRem_poorRem_ex$Population <- factor(dat_singlet_doubRem_poorRem_ex$Population,
+                                                    levels = c("BR1", "MGH", "VU", "DS3",
+                                                               "DS6", "DS7", "DS8", "DS9"))
 
-## Calculate pairwise distances between centroids
-distMat <- harrietr::melt_dist(as.matrix(dist(centroid)))
-distMat$Measure<- with(distMat, paste0(iso1, "-", iso2)) # Add pairwise labels
+plt_tsne <- DimPlot(dat_singlet_doubRem_poorRem_ex, reduction = "tsne", group.by = "Population") +
+  scale_color_manual(values = c("red", "green", "blue", "brown", "deeppink", 
+                                "darkorchid", "seagreen", "gold"),
+                     labels = c("PC9-BR1", "PC9-MGH", "PC9-VU", "DS3",
+                                "DS6", "DS7", "DS8", "DS9")) +
+  theme_bw() +
+  theme(legend.position = "right",
+        axis.text = element_text(size=12), legend.text = element_text(size=12),
+        axis.title = element_text(size=12), panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) 
 
-## Subset pairwise distances into cohorts (CLV, Sublines)
-distMat_CLV <- subset(distMat, Measure %in% c("VU-BR1", "VU-MGH", "MGH-BR1"))
-distMat_Sublines <- subset(distMat, 
-                           Measure %in% c("DS6-DS3", "DS7-DS3", "DS8-DS3",
-                                          "DS9-DS3", "DS7-DS6", "DS8-DS6",
-                                          "DS9-DS6", "DS8-DS7", "DS9-DS7",
-                                          "DS9-DS8"))
-distMat_Sublines_noDS8 <- subset(distMat, 
-                                 Measure %in% c("DS6-DS3", "DS7-DS3",
-                                                "DS9-DS3", "DS7-DS6",
-                                                "DS9-DS6", "DS9-DS7"))
+plt_tsne + ggsave("FIG_S6F.svg", width = 4, height = 3)
+plt_tsne_leg <- ggpubr::get_legend(plt_tsne)
+as_ggplot(plt_tsne_leg) + ggsave("FIG_S6F_leg.svg",
+                                 width = 2.5, height = 4)
 
-## Plot cohort comparisons
-ggplot(distMat_CLV, aes(x=reorder(Measure, dist), y=dist)) + #, fill = Measure)) +
-  geom_bar(stat='identity') + coord_flip() + theme_bw() + ylim(0,16) +
-  theme(legend.text = element_text(size = 14), 
-        plot.title = element_text(size = 14, hjust = 0.5, face = "bold"), axis.text=element_text(size=14),
-        legend.title = element_text(size=14,face="bold"), axis.title=element_text(size=14),
-        legend.position = "none", panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
-  labs(x = "Comparison", y = "Distance between Centroids") + 
-  ggsave("FIG_3H.pdf", width = 7.5, height = 3)
+## PCA - by Population
+plt_pca <- DimPlot(dat_singlet_doubRem_poorRem_ex, reduction = "pca", group.by = "Population") +
+  scale_color_manual(values = c("red", "green", "blue", "brown", "deeppink", 
+                                "darkorchid", "seagreen", "gold"),
+                     labels = c("PC9-BR1", "PC9-MGH", "PC9-VU", "DS3",
+                                "DS6", "DS7", "DS8", "DS9")) +
+  theme_bw() +
+  theme(legend.position = "right",
+        axis.text = element_text(size=12), legend.text = element_text(size=12),
+        axis.title = element_text(size=12), panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) 
 
-ggplot(distMat_Sublines_noDS8, aes(x=reorder(Measure, dist), y=dist)) + #, fill = Measure)) +
-  geom_bar(stat='identity') + coord_flip() + theme_bw() + ylim(0,16) +
-  theme(legend.text = element_text(size = 14), 
-        plot.title = element_text(size = 14, hjust = 0.5, face = "bold"), axis.text=element_text(size=14),
-        legend.title = element_text(size=14,face="bold"), axis.title=element_text(size=14),
-        legend.position = "none", panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
-  labs(x = "Comparison", y = "Distance between Centroids") + 
-  ggsave("FIG_4H.pdf", width = 7.5, height = 3)
-
-ggplot(distMat_Sublines, aes(x=reorder(Measure, dist), y=dist)) + #, fill = Measure)) +
-  geom_bar(stat='identity') + coord_flip() + theme_bw() + ylim(0,16) +
-  theme(legend.text = element_text(size = 14), 
-        plot.title = element_text(size = 14, hjust = 0.5, face = "bold"), axis.text=element_text(size=14),
-        legend.title = element_text(size=14,face="bold"), axis.title=element_text(size=14),
-        legend.position = "none", panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
-  labs(x = "Comparison", y = "Distance between Centroids") + 
-  ggsave("FIG_6D.pdf", width = 7.5, height = 3)
+plt_pca + ggsave("FIG_S6E.svg", width = 4, height = 3)
 
 
-# Run clustering on cohorts in a common UMAP space
-## Subset only CLV cells
-set.seed(1111)
-umap_vals_df_CLV <- subset(umap_vals_df, Population %in% c("VU", "MGH", "BR1"))
+# Identify optimal number of clusters
+res_CLV <- NbClust(CLV_plotDat[,c(1:2)], distance = "euclidean", min.nc=2, max.nc=6, 
+                   method = "ward.D2", index = "all")
+res_sublines <- NbClust(sublines_plotDat[,c(1:2)], distance = "euclidean", min.nc=2, max.nc=6, 
+                        method = "ward.D2", index = "all")
 
-## Subset only subline cells (no DS8)
-umap_vals_df_sublines_noDS8 <- subset(umap_vals_df, Population %in% c("DS3", "DS6", "DS7", "DS9"))
-umap_vals_df_sublines_noDS8 <- subset(umap_vals_df_sublines_noDS8, UMAP2 < 5 & UMAP1 < 0)
+# Kmeans overlay
+CLV_plotDat$Cluster <- res_CLV$Best.partition
+sublines_plotDat$Cluster <- res_sublines$Best.partition
 
-## Subset only subline cells (including DS8)
-umap_vals_df_sublines <- subset(umap_vals_df, Population %in% c("DS3", "DS6", "DS7", "DS8", "DS9"))
-umap_vals_df_sublines <- subset(umap_vals_df_sublines, UMAP1 < 0)
+## Plots as UMAP
+plt_CLV_cluster <- ggplot(data = CLV_plotDat, aes(x=UMAP_1, y=UMAP_2)) + theme_bw() +
+  geom_density_2d(aes(color = Population), 
+                  alpha = 0.8) +
+  xlim(-10,16) + ylim(-12,14) +
+  scale_color_manual(values = c("red", "green", "blue")) +
+  geom_point(aes(fill = as.factor(Cluster)), shape = 21, alpha = 1,
+             size = 0.8, stroke = 0.01) + 
+  scale_fill_manual(values = c("grey80", "grey50", "grey20")) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        axis.text = element_text(size = 12), legend.position = "none", 
+        legend.text = element_text(size = 12), legend.title = element_text(size=12), 
+        axis.title=element_text(size=12))
 
-## Clustering using k-means (3 for CLV, 3 for sublines - see main text)
-CLV_Kmeans <- kmeans(umap_vals_df_CLV[, 1:2], centers = 3)
-sublines_noDS8_Kmeans <- kmeans(umap_vals_df_sublines_noDS8[,1:2], centers = 3)
-sublines_Kmeans <- kmeans(umap_vals_df_sublines[,1:2], centers = 4)
+plt_CLV_cluster + ggsave("FIG_S6A.svg", 
+                         width = 4, height = 3)
+plt_CLV_cluster_leg <- ggpubr::get_legend(plt_CLV_cluster)
+as_ggplot(plt_CLV_cluster_leg) + ggsave("FIG_S6A_leg.svg", 
+                                        width = 2.5, height = 4)
 
-## Annotate dataframes with cluster number
-umap_vals_df_CLV$Kmeans <- CLV_Kmeans$cluster
-umap_vals_df_sublines_noDS8$Kmeans <- sublines_noDS8_Kmeans$cluster
-umap_vals_df_sublines$Kmeans <- sublines_Kmeans$cluster
+plt_sublines_cluster <- ggplot(data = sublines_plotDat, aes(x=UMAP_1, y=UMAP_2)) + theme_bw() +
+  geom_density_2d(aes(color = Population), 
+                  alpha = 0.8) +
+  xlim(-10,16) + ylim(-12,14) +
+  scale_color_manual(values = c("brown", "deeppink", "darkorchid",
+                                "seagreen", "gold")) +
+  geom_point(aes(fill = as.factor(Cluster)), shape = 21, alpha = 1,
+             size = 0.8, stroke = 0.01) + 
+  scale_fill_manual(values = c("grey80", "grey20")) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        axis.text = element_text(size = 12), legend.position = "none", 
+        legend.text = element_text(size = 12), legend.title = element_text(size=12), 
+        axis.title=element_text(size=12))
 
-## Plot cluster representation by cohort sample
-### Cluster order may be slightly different than in paper
-ggplot(umap_vals_df_CLV, aes(Kmeans)) + 
-  geom_bar(aes(fill = Population), color = "black", position = "fill", size = 0.1) + 
-  theme_classic() + 
+plt_sublines_cluster + ggsave("FIG_S6C.svg", 
+                              width = 4, height = 3)
+plt_sublines_cluster_leg <- ggpubr::get_legend(plt_sublines_cluster)
+as_ggplot(plt_sublines_cluster_leg) + ggsave("FIG_S6C_leg.svg", 
+                                             width = 2.5, height = 4)
+
+
+## Plots as bar
+ggplot(data = CLV_plotDat, aes(Cluster)) +
+  geom_bar(aes(fill = Population), color = "black", position = "fill", size = 0.1) +
+  theme_classic() +
   scale_fill_manual(values = c("red", "green", "blue")) +
   xlab("Cluster") + ylab("Cluster Fraction") +
-  scale_y_continuous(breaks=seq(0,1,.5)) +
-  theme(legend.position = "none", axis.text.y=element_text(size=20),
-        axis.text.x = element_blank(), axis.title = element_blank(), 
-        axis.line.x = element_blank(), axis.ticks.x = element_blank(), 
-        axis.line.y = element_line(size = 0.1), axis.ticks.y = element_line(size = 0.1),
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-  ggsave("FIG_3G_right.pdf", width = 10, height = 3.5)
+  scale_y_continuous(breaks = seq(0,1,0.25)) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        axis.text = element_text(size = 12), legend.position = "none", 
+        legend.text = element_text(size = 12), legend.title = element_text(size=12), 
+        axis.title=element_text(size=12)) +
+  ggsave("FIG_S6B.pdf", width = 5, height = 2.5)
 
-ggplot(umap_vals_df_sublines_noDS8, aes(Kmeans)) + 
-  geom_bar(aes(fill = Population), color = "black", position = "fill", size = 0.1) + 
-  theme_classic() + 
-  scale_fill_manual(values = c("brown", "deeppink", "darkorchid", "gold")) +
+ggplot(data = sublines_plotDat, aes(Cluster)) +
+  geom_bar(aes(fill = Population), color = "black", position = "fill", size = 0.1) +
+  theme_classic() +
+  scale_fill_manual(values = c("brown", "deeppink", "darkorchid",
+                               "seagreen", "gold")) +
   xlab("Cluster") + ylab("Cluster Fraction") +
-  scale_y_continuous(breaks=seq(0,1,.5)) +
-  theme(legend.position = "none", axis.text.y=element_text(size=20),
-        axis.text.x = element_blank(), axis.title = element_blank(), 
-        axis.line.x = element_blank(), axis.ticks.x = element_blank(), 
-        axis.line.y = element_line(size = 0.1), axis.ticks.y = element_line(size = 0.1),
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-  ggsave("FIG_4G_right.pdf", width = 10, height = 3.5)
-
-ggplot(umap_vals_df_sublines, aes(Kmeans)) + 
-  geom_bar(aes(fill = Population), color = "black", position = "fill", size = 0.1) + 
-  theme_classic() + 
-  scale_fill_manual(values = c("brown", "deeppink", "darkorchid", "seagreen", "gold")) +
-  xlab("Cluster") + ylab("Cluster Fraction") +
-  scale_y_continuous(breaks=seq(0,1,.5)) +
-  theme(legend.position = "none", axis.text.y=element_text(size=16),
-        axis.text.x = element_blank(), axis.title = element_blank(), 
-        axis.line.x = element_blank(), axis.ticks.x = element_blank(), 
-        axis.line.y = element_line(size = 0.1), axis.ticks.y = element_line(size = 0.1),
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-  ggsave("clusterOverlap_allSublines_in8.pdf", width = 9, height = 3)
-
-## Sanity check UMAP plots by cluster ID (not in paper)
-ggplot(umap_vals_df_CLV, aes(x = UMAP1, y = UMAP2, color = Kmeans)) +
-  geom_point() + 
-  theme_bw() 
-
-ggplot(umap_vals_df_sublines_noDS8, aes(x = UMAP1, y = UMAP2, color = Kmeans)) +
-  geom_point() + 
-  theme_bw() 
-
-ggplot(umap_vals_df_sublines, aes(x = UMAP1, y = UMAP2, color = Kmeans)) +
-  geom_point() + 
-  theme_bw() 
+  scale_y_continuous(breaks = seq(0,1,0.25)) +
+  scale_x_continuous(breaks = seq(0,2,1)) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        axis.text = element_text(size = 12), legend.position = "none", 
+        legend.text = element_text(size = 12), legend.title = element_text(size=12), 
+        axis.title=element_text(size=12)) +
+  ggsave("FIG_S6D.pdf", width = 5, height = 2.5)
 
 
-# Due diligence
-## CC regression 
-cc.genes <- readLines(con = "regev_lab_cell_cycle_genes.txt")
-## Separate into G2/M and S phase markers
-s.genes <- cc.genes[1:43]
-g2m.genes <- cc.genes[44:97]
+# VISION Analysis - functional interpretation
+setwd('~/git/GES_2020/scRNAseq/VISION_gmt/hallmark/')
+counts <- dat_singlet_doubRem_poorRem_ex@assays$RNA@counts
+meta <- dat_singlet_doubRem_poorRem_ex@meta.data
+# Scale counts within a sample
+n.umi <- colSums(counts)
+scaled_counts <- t(t(counts) / n.umi) * median(n.umi)
+## HALLMARK GENES
+gmt_files <- list.files(path = '~/git/GES_2020/scRNAseq/VISION_gmt/hallmark/', pattern = "\\.gmt$")
+vis <- Vision(data = counts, signatures = gmt_files, meta = meta)
+vis <- analyze(vis)
+visScores <- as.data.frame(getSignatureScores(vis))
 
-## Perform Seurat cell cycle scoring
-dat_singlet_clusters <- CellCycleScoring(object = dat_singlet_clusters, 
-                                         s.genes = s.genes, 
-                                         g2m.genes = g2m.genes,
-                                         set.ident = TRUE)
+## Create dataframe of gene expression and signatures
+dat_singlet_cleaned_VISION <- dat_singlet_doubRem_poorRem_ex
+dat_singlet_cleaned_VISION <- AddMetaData(object = dat_singlet_cleaned_VISION, 
+                                          metadata = visScores)
 
-## Plot data in common UMAP space by cell cycle score
-### There is some separation, but not between samples.
-### Non-regressed data used
-DimPlot(dat_singlet_clusters, reduction.use = "umap", group.by = "Phase") +
-  ggsave("FIG_S6C.svg", width = 6, height = 4)
+## Subset dataframe for only UMAP axes, sample name, and hallmark gene signatures
+hallmark_metrics <- paste0("HALLMARK_", removeExt(gmt_files))
+all_plotDat <- FetchData(dat_singlet_cleaned_VISION, 
+                         vars = c("UMAP_1", "UMAP_2", "Population",
+                                  hallmark_metrics, "HALLMARK_KRAS_SIGNALING",
+                                  "HALLMARK_UV_RESPONSE"))
 
-## Make cell identities the sample name again
-dat_singlet_clusters <- SetAllIdent(object = dat_singlet_clusters, id = "Population")
+## Plot distribution of all 48 hallmark sets for each population
+all_dat_hallmarks <- all_plotDat[3:ncol(all_plotDat)]
+all_dat_hallmarks_melt <- reshape2::melt(all_dat_hallmarks, id.vars = "Population")
+all_dat_hallmarks_melt$variable <- str_remove(as.character(all_dat_hallmarks_melt$variable), "HALLMARK_")
+all_dat_hallmarks_melt$Population <- factor(all_dat_hallmarks_melt$Population,
+                                            levels = c("BR1", "MGH", "VU", "DS3",
+                                                       "DS6", "DS7", "DS8", "DS9"))
+
+plt_hallmarks <- ggplot(all_dat_hallmarks_melt, aes(x=value, color = Population, fill = Population)) +
+  geom_density(alpha = 0.5) + facet_wrap(~variable, ncol = 6, scales = "free") + theme_bw() +
+  scale_color_manual(values = c("red", "green", "blue", "brown", "deeppink", 
+                                "darkorchid", "seagreen", "gold"),
+                     labels = c("PC9-BR1", "PC9-MGH", "PC9-VU", "DS3",
+                                "DS6", "DS7", "DS8", "DS9")) +
+  scale_fill_manual(values = c("red", "green", "blue", "brown", "deeppink", 
+                               "darkorchid", "seagreen", "gold"),
+                    labels = c("PC9-BR1", "PC9-MGH", "PC9-VU", "DS3",
+                               "DS6", "DS7", "DS8", "DS9")) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        legend.position = "none", axis.text = element_text(size = 18), axis.title = element_text(size = 18)) +
+  xlab("Signature Score") + ylab("Density") 
+
+plt_hallmarks + ggsave("FIG_S8.svg", width = 18, height = 24)
+plt_hallmarks_leg <- ggpubr::get_legend(plt_hallmarks)
+as_ggplot(plt_hallmarks_leg) + ggsave("FIG_S8_legend.svg",
+                                      width = 6, height = 4)
+
+## Plot example UMAP signature overlays
+plt_all_overlay <- ggplot() + theme_bw() +
+  geom_density_2d(data = all_plotDat, 
+                  aes(x = UMAP_1, y = UMAP_2,
+                      color = Population), alpha = 0.8) +
+  scale_color_manual(values = c("red", "brown", "deeppink", "darkorchid",
+                                "seagreen", "gold", "green", "blue")) +
+  geom_point(data = all_plotDat, shape = 21,
+             aes(x = UMAP_1, y = UMAP_2, fill = HALLMARK_INTERFERON_ALPHA_RESPONSE),
+             size = 0.8, stroke = 0.01) + 
+  scale_fill_gradient(guide = FALSE, 
+                      low = "white", 
+                      high = "black") +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        axis.text = element_text(size = 12), legend.position = "none", 
+        legend.text = element_text(size = 12), legend.title = element_text(size=12), 
+        axis.title=element_text(size=12)) 
+
+plt_all_overlay
