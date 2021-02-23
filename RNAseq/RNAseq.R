@@ -1,29 +1,27 @@
-setwd("/Volumes/quaranta/Data/RNAseq/PC9_RNAseq/")
+setwd("~/git/GES_2020/RNAseq/")
 
 library(ggplot2)
 library(DESeq2)
 library(biomaRt)
 
-# Load counts from featureCounts output - see RNAseq_processing.txt
-VU_counts <- read.csv(file = "Sample1/2959-CH-1-AAGACCGT-GTCGATTG_S10_R1_001.fastq.gz_featurecounts.txt",
+# Load counts from featureCounts output - see RNAseq_processing.txt for how they are created
+## See output text files in supplementary information files
+VU_counts <- read.csv(file = "2959-CH-1-AAGACCGT-GTCGATTG_S10_R1_001.fastq.gz_featurecounts.txt",
                          sep = "", header = T, skip = 1, row.names = "Geneid")
-MGH_counts <- read.csv(file = "Sample2/2959-CH-2-TTGCGAGA-TATGGCAC_S11_R1_001.fastq.gz_featurecounts.txt",
+MGH_counts <- read.csv(file = "2959-CH-2-TTGCGAGA-TATGGCAC_S11_R1_001.fastq.gz_featurecounts.txt",
                          sep = "", header = T, skip = 1, row.names = "Geneid")
-BR1_counts <- read.csv(file = "Sample3/2959-CH-3-GCAATTCC-CTCGAACA_S12_R1_001.fastq.gz_featurecounts.txt",
+BR1_counts <- read.csv(file = "2959-CH-3-GCAATTCC-CTCGAACA_S12_R1_001.fastq.gz_featurecounts.txt",
                          sep = "", header = T, skip = 1, row.names = "Geneid")
-DS3_counts <- read.csv(file = "Sample4/2959-CH-4-GAATCCGT-CAACTCCA_S13_R1_001.fastq.gz_featurecounts.txt",
+DS3_counts <- read.csv(file = "2959-CH-4-GAATCCGT-CAACTCCA_S13_R1_001.fastq.gz_featurecounts.txt",
                          sep = "", header = T, skip = 1, row.names = "Geneid")
-DS6_counts <- read.csv(file = "Sample5/2959-CH-5-CCGCTTAA-GTCATCGT_S14_R1_001.fastq.gz_featurecounts.txt",
+DS6_counts <- read.csv(file = "2959-CH-5-CCGCTTAA-GTCATCGT_S14_R1_001.fastq.gz_featurecounts.txt",
                          sep = "", header = T, skip = 1, row.names = "Geneid")
-DS7_counts <- read.csv(file = "Sample6/2959-CH-6-TACCTGCA-GGACATCA_S15_R1_001.fastq.gz_featurecounts.txt",
+DS7_counts <- read.csv(file = "2959-CH-6-TACCTGCA-GGACATCA_S15_R1_001.fastq.gz_featurecounts.txt",
                          sep = "", header = T, skip = 1, row.names = "Geneid")
-DS8_counts <- read.csv(file = "Sample7/2959-CH-7-GTCGATTG-AAGACCGT_S16_R1_001.fastq.gz_featurecounts.txt",
+DS8_counts <- read.csv(file = "2959-CH-7-GTCGATTG-AAGACCGT_S16_R1_001.fastq.gz_featurecounts.txt",
                          sep = "", header = T, skip = 1, row.names = "Geneid")
-DS9_counts <- read.csv(file = "Sample8/2959-CH-8-TATGGCAC-TTGCGAGA_S17_R1_001.fastq.gz_featurecounts.txt",
+DS9_counts <- read.csv(file = "2959-CH-8-TATGGCAC-TTGCGAGA_S17_R1_001.fastq.gz_featurecounts.txt",
                          sep = "", header = T, skip = 1, row.names = "Geneid")
-
-# Change working directory into main folder
-setwd("~/Documents/QuarantaLab/GES_2020/RNAseq/")
 
 # Compile into common dataframe
 PC9_counts <- cbind(VU_counts[6], MGH_counts[6],
@@ -89,11 +87,11 @@ ggplot(df_pca_data, aes(PC1, PC2, fill = Line))+
     axis.text.y = element_text(size = 14, colour = "black"),
     legend.position = "right", axis.text=element_text(size=14),
     legend.title = element_text(size=14), axis.title=element_text(size=14)) +
-  ggsave("FIG_S8A.pdf", width = 5, height = 4)
+  ggsave("FIG_S7A.pdf", width = 5, height = 4)
 
 # Hierarchical clustering of PCA transcriptomic phenotypes
 dists <- dist(t(assay(rld)))
 hc <- hclust(dists, method = "ward.D2")
-pdf("FIG_S8B.pdf")
+pdf("FIG_S7B.pdf")
 plot(hc, xlab = "Population", main = "Cluster Tree by Transcriptome - PC9")
 dev.off()
