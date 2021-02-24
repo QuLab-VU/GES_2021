@@ -1,0 +1,133 @@
+# Create RPKM files from exome BAM files
+## Removed chr24 (chrY) because it is very small
+## Bam files are intermediate file outputs of exome alignment
+
+### PC9-VU
+python conifer.py rpkm --probes ~/git/GES_2020/WES/CNV/probes_no24.txt --input ~/git/GES_2020/WES/CNV/Sample1_aligned_sorted.bam --output ~/git/GES_2020/WES/CNV/RPKM/sample1_rpkm_no24.txt
+
+### PC9-MGH
+python conifer.py rpkm --probes ~/git/GES_2020/WES/CNV/probes_no24.txt --input ~/git/GES_2020/WES/CNV/Sample1_aligned_sorted.bam --output ~/git/GES_2020/WES/CNV/RPKM/sample1_rpkm_no24.txt
+
+### PC9-BR1
+python conifer.py rpkm --probes ~/git/GES_2020/WES/CNV/probes_no24.txt --input ~/git/GES_2020/WES/CNV/Sample1_aligned_sorted.bam --output ~/git/GES_2020/WES/CNV/RPKM/sample1_rpkm_no24.txt
+
+### DS3
+python conifer.py rpkm --probes ~/git/GES_2020/WES/CNV/probes_no24.txt --input ~/git/GES_2020/WES/CNV/Sample1_aligned_sorted.bam --output ~/git/GES_2020/WES/CNV/RPKM/sample1_rpkm_no24.txt
+
+### DS6
+python conifer.py rpkm --probes ~/git/GES_2020/WES/CNV/probes_no24.txt --input ~/git/GES_2020/WES/CNV/Sample1_aligned_sorted.bam --output ~/git/GES_2020/WES/CNV/RPKM/sample1_rpkm_no24.txt
+
+### DS7
+python conifer.py rpkm --probes ~/git/GES_2020/WES/CNV/probes_no24.txt --input ~/git/GES_2020/WES/CNV/Sample1_aligned_sorted.bam --output ~/git/GES_2020/WES/CNV/RPKM/sample1_rpkm_no24.txt
+
+### DS8
+python conifer.py rpkm --probes ~/git/GES_2020/WES/CNV/probes_no24.txt --input ~/git/GES_2020/WES/CNV/Sample1_aligned_sorted.bam --output ~/git/GES_2020/WES/CNV/RPKM/sample1_rpkm_no24.txt
+
+### DS9
+python conifer.py rpkm --probes ~/git/GES_2020/WES/CNV/probes_no24.txt --input ~/git/GES_2020/WES/CNV/Sample1_aligned_sorted.bam --output ~/git/GES_2020/WES/CNV/RPKM/sample1_rpkm_no24.txt
+
+
+# Analyze all RPKM values for all samples and create SVD-ZRPKM values
+## Use RPKM output files as input; used svd=2 after looking at scree plot (elbow at 2)
+
+python conifer.py analyze --probes  ~/git/GES_2020/WES/CNV/probes_no24.txt --rpkm_dir ~/git/GES_2020/WES/CNV/RPKM/ --output analysis_allPops.hdf5 --svd 2 --write_svals singular_values_allPops.txt --plot_scree screeplot_allPops.png --write_sd sd_values.txt
+
+
+# Call CNVs using CoNIFER threshold algorithm
+python conifer.py call --input analysis_allPops.hdf5 --output calls_allPops.txt
+
+# Export calls for each sample
+python conifer.py export --input analysis_allPops.hdf5 --output export_svdzrpkm_allPops/
+
+# Plot algorithm-chosen calls
+python conifer.py plotcalls --input analysis_allPops.hdf5 --calls calls_allPops.txt --outputdir calls_images/
+
+
+# Plot subsets of genomic regions with predicted CNVs
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr2:130000000-180000000 --output BR1_chr2_allDels.pdf --sample r:sample3_rpkm_no24 g:sample2_rpkm_no24 b:sample1_rpkm_no24
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr1:25000000-50000000 --output DS8_chr1_del.pdf --sample seagreen:sample7_rpkm_no24 deeppink:sample5_rpkm_no24 darkorchid:sample6_rpkm_no24 saddlebrown:sample4_rpkm_no24 gold:sample8_rpkm_no24
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr2:220000000-250000000 --output DS6_chr2_amp.pdf --sample deeppink:sample5_rpkm_no24 seagreen:sample7_rpkm_no24 darkorchid:sample6_rpkm_no24 saddlebrown:sample4_rpkm_no24 gold:sample8_rpkm_no24
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr4:20000000-70000000 --output DS6_chr4_del.pdf --sample deeppink:sample5_rpkm_no24 seagreen:sample7_rpkm_no24 darkorchid:sample6_rpkm_no24 saddlebrown:sample4_rpkm_no24 gold:sample8_rpkm_no24
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr6:55000000-120000000 --output DS8_chr6_amp.pdf --sample seagreen:sample7_rpkm_no24 deeppink:sample5_rpkm_no24 darkorchid:sample6_rpkm_no24 saddlebrown:sample4_rpkm_no24 gold:sample8_rpkm_no24
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr8:100000000-144000000 --output BR1_chr8_amp.pdf --sample r:sample3_rpkm_no24 g:sample2_rpkm_no24 b:sample1_rpkm_no24
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr8:30000000-70000000 --output DS8_chr8_amp.pdf --sample seagreen:sample7_rpkm_no24 deeppink:sample5_rpkm_no24 darkorchid:sample6_rpkm_no24 saddlebrown:sample4_rpkm_no24 gold:sample8_rpkm_no24
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr10:100000000-136000000 --output DS8_chr10_amp.pdf --sample seagreen:sample7_rpkm_no24 deeppink:sample5_rpkm_no24 darkorchid:sample6_rpkm_no24 saddlebrown:sample4_rpkm_no24 gold:sample8_rpkm_no24 r:sample3_rpkm_no24
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr11:193000-400000 --output DS8_chr11_del.pdf --sample seagreen:sample7_rpkm_no24 deeppink:sample5_rpkm_no24 darkorchid:sample6_rpkm_no24 saddlebrown:sample4_rpkm_no24 gold:sample8_rpkm_no24
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr14:65000000-80000000 --output DS8_chr14_del.pdf --sample seagreen:sample7_rpkm_no24 deeppink:sample5_rpkm_no24 darkorchid:sample6_rpkm_no24 saddlebrown:sample4_rpkm_no24 gold:sample8_rpkm_no24
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr14:77000000-95000000 --output DS6_chr14_amp.pdf --sample deeppink:sample5_rpkm_no24 seagreen:sample7_rpkm_no24 darkorchid:sample6_rpkm_no24 saddlebrown:sample4_rpkm_no24 gold:sample8_rpkm_no24
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr15:75000000-103000000 --output DS7_chr15_amp.pdf --sample darkorchid:sample6_rpkm_no24 seagreen:sample7_rpkm_no24 deeppink:sample5_rpkm_no24 saddlebrown:sample4_rpkm_no24 gold:sample8_rpkm_no24
+
+## CH predicted CNVs
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr4:150000000-200000000 --output BR1_chr4_amp_CH.pdf --sample r:sample3_rpkm_no24 g:sample2_rpkm_no24 b:sample1_rpkm_no24
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr7:41000000-75000000 --output BR1_chr7_amp_CH.pdf --sample r:sample3_rpkm_no24 g:sample2_rpkm_no24 b:sample1_rpkm_no24
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr7:135000000-160000000 --output BR1_chr7_del_CH.pdf --sample r:sample3_rpkm_no24 g:sample2_rpkm_no24 b:sample1_rpkm_no24
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr17:20000000-40000000 --output BR1_chr17_del_CH.pdf --sample r:sample3_rpkm_no24 g:sample2_rpkm_no24 b:sample1_rpkm_no24
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr17:44000000-61000000 --output DS8_chr17_amp_CH.pdf --sample seagreen:sample7_rpkm_no24 deeppink:sample5_rpkm_no24 darkorchid:sample6_rpkm_no24 saddlebrown:sample4_rpkm_no24 gold:sample8_rpkm_no24
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr19:110000-2000000 --output DS8_chr19_amp_CH.pdf --sample seagreen:sample7_rpkm_no24 deeppink:sample5_rpkm_no24 darkorchid:sample6_rpkm_no24 saddlebrown:sample4_rpkm_no24 gold:sample8_rpkm_no24
+
+
+# Plot all samples for whole chromosomes for all samples
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr1:69000-250000000 --output chr1_all.pdf --sample b:sample1_rpkm_no24 seagreen:sample7_rpkm_no24 deeppink:sample5_rpkm_no24 darkorchid:sample6_rpkm_no24 saddlebrown:sample4_rpkm_no24 gold:sample8_rpkm_no24 r:sample3_rpkm_no24 g:sample2_rpkm_no24
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr2:10000000-250000000 --output chr2_all.pdf --sample b:sample1_rpkm_no24 seagreen:sample7_rpkm_no24 deeppink:sample5_rpkm_no24 darkorchid:sample6_rpkm_no24 saddlebrown:sample4_rpkm_no24 gold:sample8_rpkm_no24 r:sample3_rpkm_no24 g:sample2_rpkm_no24
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr3:360000-198000000 --output chr3_all.pdf --sample b:sample1_rpkm_no24 seagreen:sample7_rpkm_no24 deeppink:sample5_rpkm_no24 darkorchid:sample6_rpkm_no24 saddlebrown:sample4_rpkm_no24 gold:sample8_rpkm_no24 r:sample3_rpkm_no24 g:sample2_rpkm_no24
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr4:50000-200000000 --output chr4_all.pdf --sample b:sample1_rpkm_no24 seagreen:sample7_rpkm_no24 deeppink:sample5_rpkm_no24 darkorchid:sample6_rpkm_no24 saddlebrown:sample4_rpkm_no24 gold:sample8_rpkm_no24 r:sample3_rpkm_no24 g:sample2_rpkm_no24
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr5:140000-181000000 --output chr5_all.pdf --sample b:sample1_rpkm_no24 seagreen:sample7_rpkm_no24 deeppink:sample5_rpkm_no24 darkorchid:sample6_rpkm_no24 saddlebrown:sample4_rpkm_no24 gold:sample8_rpkm_no24 r:sample3_rpkm_no24 g:sample2_rpkm_no24
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr6:280000-175000000 --output chr6_all.pdf --sample b:sample1_rpkm_no24 seagreen:sample7_rpkm_no24 deeppink:sample5_rpkm_no24 darkorchid:sample6_rpkm_no24 saddlebrown:sample4_rpkm_no24 gold:sample8_rpkm_no24 r:sample3_rpkm_no24 g:sample2_rpkm_no24
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr7:193000-159000000 --output chr7_all.pdf --sample b:sample1_rpkm_no24 seagreen:sample7_rpkm_no24 deeppink:sample5_rpkm_no24 darkorchid:sample6_rpkm_no24 saddlebrown:sample4_rpkm_no24 gold:sample8_rpkm_no24 r:sample3_rpkm_no24 g:sample2_rpkm_no24
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr8:190000-150000000 --output chr8_all.pdf --sample b:sample1_rpkm_no24 seagreen:sample7_rpkm_no24 deeppink:sample5_rpkm_no24 darkorchid:sample6_rpkm_no24 saddlebrown:sample4_rpkm_no24 gold:sample8_rpkm_no24 r:sample3_rpkm_no24 g:sample2_rpkm_no24
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr9:14800-142000000 --output chr9_all.pdf --sample b:sample1_rpkm_no24 seagreen:sample7_rpkm_no24 deeppink:sample5_rpkm_no24 darkorchid:sample6_rpkm_no24 saddlebrown:sample4_rpkm_no24 gold:sample8_rpkm_no24 r:sample3_rpkm_no24 g:sample2_rpkm_no24
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr10:90000-136000000 --output chr10_all.pdf --sample b:sample1_rpkm_no24 seagreen:sample7_rpkm_no24 deeppink:sample5_rpkm_no24 darkorchid:sample6_rpkm_no24 saddlebrown:sample4_rpkm_no24 gold:sample8_rpkm_no24 r:sample3_rpkm_no24 g:sample2_rpkm_no24
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr11:193000-135000000 --output chr11_all.pdf --sample b:sample1_rpkm_no24 seagreen:sample7_rpkm_no24 deeppink:sample5_rpkm_no24 darkorchid:sample6_rpkm_no24 saddlebrown:sample4_rpkm_no24 gold:sample8_rpkm_no24 r:sample3_rpkm_no24 g:sample2_rpkm_no24
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr12:176000-134000000 --output chr12_all.pdf --sample b:sample1_rpkm_no24 seagreen:sample7_rpkm_no24 deeppink:sample5_rpkm_no24 darkorchid:sample6_rpkm_no24 saddlebrown:sample4_rpkm_no24 gold:sample8_rpkm_no24 r:sample3_rpkm_no24 g:sample2_rpkm_no24
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr13:19300000-116000000 --output chr13_all.pdf --sample b:sample1_rpkm_no24 seagreen:sample7_rpkm_no24 deeppink:sample5_rpkm_no24 darkorchid:sample6_rpkm_no24 saddlebrown:sample4_rpkm_no24 gold:sample8_rpkm_no24 r:sample3_rpkm_no24 g:sample2_rpkm_no24
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr14:19300000-107500000 --output chr14_all.pdf --sample b:sample1_rpkm_no24 seagreen:sample7_rpkm_no24 deeppink:sample5_rpkm_no24 darkorchid:sample6_rpkm_no24 saddlebrown:sample4_rpkm_no24 gold:sample8_rpkm_no24 r:sample3_rpkm_no24 g:sample2_rpkm_no24
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr15:20000000-103000000 --output chr15_all.pdf --sample b:sample1_rpkm_no24 seagreen:sample7_rpkm_no24 deeppink:sample5_rpkm_no24 darkorchid:sample6_rpkm_no24 saddlebrown:sample4_rpkm_no24 gold:sample8_rpkm_no24 r:sample3_rpkm_no24 g:sample2_rpkm_no24
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr16:97000-91000000 --output chr16_all.pdf --sample b:sample1_rpkm_no24 seagreen:sample7_rpkm_no24 deeppink:sample5_rpkm_no24 darkorchid:sample6_rpkm_no24 saddlebrown:sample4_rpkm_no24 gold:sample8_rpkm_no24 r:sample3_rpkm_no24 g:sample2_rpkm_no24
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr17:6000-82000000 --output chr17_all.pdf --sample b:sample1_rpkm_no24 seagreen:sample7_rpkm_no24 deeppink:sample5_rpkm_no24 darkorchid:sample6_rpkm_no24 saddlebrown:sample4_rpkm_no24 gold:sample8_rpkm_no24 r:sample3_rpkm_no24 g:sample2_rpkm_no24
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr18:158000-79000000 --output chr18_all.pdf --sample b:sample1_rpkm_no24 seagreen:sample7_rpkm_no24 deeppink:sample5_rpkm_no24 darkorchid:sample6_rpkm_no24 saddlebrown:sample4_rpkm_no24 gold:sample8_rpkm_no24 r:sample3_rpkm_no24 g:sample2_rpkm_no24
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr19:71000-60000000 --output chr19_all.pdf --sample b:sample1_rpkm_no24 seagreen:sample7_rpkm_no24 deeppink:sample5_rpkm_no24 darkorchid:sample6_rpkm_no24 saddlebrown:sample4_rpkm_no24 gold:sample8_rpkm_no24 r:sample3_rpkm_no24 g:sample2_rpkm_no24
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr20:68000-63000000 --output chr20_all.pdf --sample b:sample1_rpkm_no24 seagreen:sample7_rpkm_no24 deeppink:sample5_rpkm_no24 darkorchid:sample6_rpkm_no24 saddlebrown:sample4_rpkm_no24 gold:sample8_rpkm_no24 r:sample3_rpkm_no24 g:sample2_rpkm_no24
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr21:9900000-49000000 --output chr21_all.pdf --sample b:sample1_rpkm_no24 seagreen:sample7_rpkm_no24 deeppink:sample5_rpkm_no24 darkorchid:sample6_rpkm_no24 saddlebrown:sample4_rpkm_no24 gold:sample8_rpkm_no24 r:sample3_rpkm_no24 g:sample2_rpkm_no24
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr22:16000000-52000000 --output chr22_all.pdf --sample b:sample1_rpkm_no24 seagreen:sample7_rpkm_no24 deeppink:sample5_rpkm_no24 darkorchid:sample6_rpkm_no24 saddlebrown:sample4_rpkm_no24 gold:sample8_rpkm_no24 r:sample3_rpkm_no24 g:sample2_rpkm_no24
+
+python conifer.py plot --input analysis_allPops.hdf5 --region chr23:200000-156000000 --output chrX_all.pdf --sample b:sample1_rpkm_no24 seagreen:sample7_rpkm_no24 deeppink:sample5_rpkm_no24 darkorchid:sample6_rpkm_no24 saddlebrown:sample4_rpkm_no24 gold:sample8_rpkm_no24 r:sample3_rpkm_no24 g:sample2_rpkm_no24
