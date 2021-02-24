@@ -1,436 +1,523 @@
-# BiocManager::install("GOSemSim")
+# Load libraries
 library(stringr)
 library(enrichR)
 library(GOSemSim)
 library(reshape2)
 library(ggplot2)
+library(GenomicFeatures)
+library(AnnotationDbi)
+library(org.Hs.eg.db)
+library(ggpubr)
 
 # Load unique variants and differentially expressed genes
 # for each cohort
-setwd('~/Documents/QuarantaLab/GES_2020/GO/')
-load('variants_byCohort.RData')
-load('DEGs_byCohort.RData')
+setwd('~/git/GES_2020/GO')
+load('mutations_DEGs-hg38.RData')
+source("SummarySE.R")
 
-# Use these enrichr GO databases
-dbs <- c("GO_Molecular_Function_2018", "GO_Biological_Process_2018")
-
-# Cell Line Versions (CLV)
-# Create DEG list of all CLV
-samples_CLV <- list("VU" = VU_DEGs$hgnc_symbol, 
-                    "MGH" = MGH_DEGs$hgnc_symbol, 
-                    "BR1" = BR1_DEGs$hgnc_symbol)
-
-# Create annotated DEG GO dataframe
-GO_df_DEG_CLV <- list()
-i = 1
-for (s in samples_CLV) {
-  # print(names(samples)[i])
-  enriched <- enrichr(s, dbs)
-  bp <- enriched[["GO_Biological_Process_2018"]]
-  mf <- enriched[["GO_Molecular_Function_2018"]]
-  bp$Sample = names(samples_CLV)[i]
-  mf$Sample = names(samples_CLV)[i]
-  bp$GOtype <- "bp"
-  mf$GOtype <- "mf"
-  GO_samp <- rbind(bp, mf)
-  GO_df_DEG_CLV[[names(samples_CLV)[i]]] <- GO_samp
-  i = i + 1
-}
-
-## Add columns to be subset on later
-allGO_data_DEG_CLV = do.call(rbind, GO_df_DEG_CLV)
-allGO_data_DEG_CLV$logp <- -log10(allGO_data_DEG_CLV$P.value)
-allGO_data_DEG_CLV$logq <- -log10(allGO_data_DEG_CLV$Adjusted.P.value)
-allGO_data_DEG_CLV$numGO <- str_extract(allGO_data_DEG_CLV$Term, "GO:[0-9]{1,}")
-
-## Keep only significant terms
-sig_GO_CLV <- subset(allGO_data_DEG_CLV, Adjusted.P.value < 0.05)
-
-## Significant GO terms by CLV and GO type for scRNAseq DEGs
-sig_GO_DF_VU <- subset(sig_GO_CLV, Sample == "VU")
-sig_GO_DF_VU_BP <- subset(sig_GO_DF_VU, GOtype == "bp")
-sig_GO_DF_VU_MF <- subset(sig_GO_DF_VU, GOtype == "mf")
-
-sig_GO_DF_MGH <- subset(sig_GO_CLV, Sample == "MGH")
-sig_GO_DF_MGH_BP <- subset(sig_GO_DF_MGH, GOtype == "bp")
-sig_GO_DF_MGH_MF <- subset(sig_GO_DF_MGH, GOtype == "mf")
-
-sig_GO_DF_BR1 <- subset(sig_GO_CLV, Sample == "BR1")
-sig_GO_DF_BR1_BP <- subset(sig_GO_DF_BR1, GOtype == "bp")
-sig_GO_DF_BR1_MF <- subset(sig_GO_DF_BR1, GOtype == "mf")
-
-# Create list of IMPACT mutations for CLV
-samples_muts_CLV <- list("VU" = unique((subset(test_s1_dedup, Impact %in% c("LOW", "MODERATE", "HIGH"))$Symbol)),
-                         "MGH" = unique((subset(test_s2_dedup, Impact %in% c("LOW", "MODERATE", "HIGH"))$Symbol)),
-                         "BR1" = unique((subset(test_s3_dedup, Impact %in% c("LOW", "MODERATE", "HIGH"))$Symbol)))
-
-## Create dataframe of GO terms associated with cell line version mutations
-muts_GO_CLV <- list()
-i = 1
-for (s in samples_muts_CLV) {
-  enriched <- enrichr(s, dbs)
-  bp <- enriched[["GO_Biological_Process_2018"]]
-  mf <- enriched[["GO_Molecular_Function_2018"]]
-  bp$Sample = names(samples_muts_CLV)[i]
-  mf$Sample = names(samples_muts_CLV)[i]
-  bp$GOtype <- "bp"
-  mf$GOtype <- "mf"
-  GO_samp <- rbind(bp, mf)
-  muts_GO_CLV[[names(samples_muts_CLV)[i]]] <- GO_samp
-  i = i + 1
-}
-
-## Annotate dataframe with key terms (subset on below)
-muts_GO_all_CLV = do.call(rbind, muts_GO_CLV)
-muts_GO_all_CLV$logp <- -log10(muts_GO_all_CLV$P.value)
-muts_GO_all_CLV$logq <- -log10(muts_GO_all_CLV$Adjusted.P.value)
-muts_GO_all_CLV$numGO <- str_extract(muts_GO_all_CLV$Term, "GO:[0-9]{1,}")
-
-## Keep only significant GO terms
-muts_GO_sig_CLV <- subset(muts_GO_all_CLV, P.value < 0.05)
-
-## Identify significant GO terms by Sample and GO type for mutations
-muts_GO_sig_VU <- subset(muts_GO_sig_CLV, Sample == "VU")
-muts_GO_sig_VU_BP <- subset(muts_GO_sig_VU, GOtype == "bp")
-muts_GO_sig_VU_MF <- subset(muts_GO_sig_VU, GOtype == "mf")
-
-muts_GO_sig_MGH <- subset(muts_GO_sig_CLV, Sample == "MGH")
-muts_GO_sig_MGH_BP <- subset(muts_GO_sig_MGH, GOtype == "bp")
-muts_GO_sig_MGH_MF <- subset(muts_GO_sig_MGH, GOtype == "mf")
-
-muts_GO_sig_BR1 <- subset(muts_GO_sig_CLV, Sample == "BR1")
-muts_GO_sig_BR1_BP <- subset(muts_GO_sig_BR1, GOtype == "bp")
-muts_GO_sig_BR1_MF <- subset(muts_GO_sig_BR1, GOtype == "mf")
-
-
-## GOSemSim comparison 
-### Load databases
+# Load databases
 hsGO_bp <- godata('org.Hs.eg.db', ont="BP")
 hsGO_mf <- godata('org.Hs.eg.db', ont="MF")
+hsGO_cc <- godata('org.Hs.eg.db', ont="CC")
 
-### Genomic --> transcriptomic connection 
-#### Will be 6 comparisons - 3 groups, 2 ontologies each
-#### VU
-VU_BP <- mgoSim(muts_GO_sig_VU_BP$numGO, sig_GO_DF_VU_BP$numGO, semData=hsGO_bp, measure="Wang", combine="BMA")
-VU_MF <- mgoSim(muts_GO_sig_VU_MF$numGO, sig_GO_DF_VU_MF$numGO, semData=hsGO_mf, measure="Wang", combine="BMA")
+# Pull all possible genes from hg38 - download from ftp://ftp.ensembl.org/pub/release-98/gtf/homo_sapiens/
+txdb <- makeTxDbFromGFF(file = "Homo_sapiens.GRCh38.98.gtf", format = "gtf")
+genes <- genes(txdb)
+genes_symbol <- unname(mapIds(org.Hs.eg.db,keys=genes$gene_id,
+                              column="SYMBOL",keytype="ENSEMBL",
+                              multiVals="first"))
+genes_symbol <- genes_symbol[!is.na(genes_symbol)]
 
-#### MGH
-MGH_BP <- mgoSim(muts_GO_sig_MGH_BP$numGO, sig_GO_DF_MGH_BP$numGO, semData=hsGO_bp, measure="Wang", combine="BMA")
-MGH_MF <- mgoSim(muts_GO_sig_MGH_MF$numGO, sig_GO_DF_MGH_MF$numGO, semData=hsGO_mf, measure="Wang", combine="BMA")
+# Use these enrichr GO databases
+dbs <- c("GO_Molecular_Function_2018", "GO_Biological_Process_2018",
+         "GO_Cellular_Component_2018")
 
-#### BR1
-BR1_BP <- mgoSim(muts_GO_sig_BR1_BP$numGO, sig_GO_DF_BR1_BP$numGO, semData=hsGO_bp, measure="Wang", combine="BMA")
-BR1_MF <- mgoSim(muts_GO_sig_BR1_MF$numGO, sig_GO_DF_BR1_MF$numGO, semData=hsGO_mf, measure="Wang", combine="BMA")
-
-### Compile dataframe of similarities
-semSimDF_CLV <- data.frame(BP = c(VU_BP, MGH_BP, BR1_BP),
-                            MF = c(VU_MF, MGH_MF, BR1_MF))
-semSimDF_CLV$id <- c("VU", "MGH", "BR1")
-
-### Unique GO ontology type similarity plots 
-#### BP
-ssDF_CLV_BP <- melt(semSimDF_CLV, measure.vars = c("BP"), id.vars = "id")
-ggplot(ssDF_CLV_BP, aes(x = id, y = value, fill = id)) +
-  geom_bar(stat = "identity", position = "dodge", color = "black") +
-  theme_classic() + labs(x = "Cell Line Version", y = "GO Semantic Similarity") +
-  ylim(0,0.5) +
-  scale_fill_manual(values = c("red", "green", "blue"),
-                    name = "none") +
-  ggtitle("Biological Process") +
-  theme(
-    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-    legend.position = "none",
-    plot.title = element_text(size = 16, hjust = 0.5), axis.text=element_text(size=14),
-    legend.title = element_blank(), axis.title=element_text(size=14)) +
-  ggsave("FIG_3I_left.pdf", width = 4, height = 5)
-
-#### MF
-ssDF_CLV_MF <- melt(semSimDF_CLV, measure.vars = c("MF"), id.vars = "id")
-ggplot(ssDF_CLV_MF, aes(x = id, y = value, fill = id)) +
-  geom_bar(stat = "identity", position = "dodge", color = "black") +
-  theme_classic() + labs(x = "Cell Line Version", y = "GO Semantic Similarity") +
-  ylim(0,0.35) +
-  scale_fill_manual(values = c("red", "green", "blue"),
-                    name = "none") +
-  ggtitle("Molecular Function") +
-  theme(
-    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-    legend.position = "none",
-    plot.title = element_text(size = 16, hjust = 0.5), axis.text=element_text(size=14),
-    legend.title = element_blank(), axis.title=element_text(size=14)) +
-  ggsave("FIG_3I_right.pdf", width = 4, height = 5)
-
-
-# Sublines 
-## Create a dataframe of all subline differentially expressed genes
-samples_sublines <- list("DS3" = DS3_DEGs$hgnc_symbol,
-                         "DS6" = DS6_DEGs$hgnc_symbol,
-                         "DS7" = DS7_DEGs$hgnc_symbol,
-                         "DS8" = DS8_DEGs$hgnc_symbol,
-                         "DS9" = DS9_DEGs$hgnc_symbol)
-
-## Create GO term dataframe for each GO type and subline
-GO_df_DEG_sublines <- list()
-i = 1
-for (s in samples_sublines) {
-  enriched <- enrichr(s, dbs)
-  bp <- enriched[["GO_Biological_Process_2018"]]
-  mf <- enriched[["GO_Molecular_Function_2018"]]
-  bp$Sample = names(samples_sublines)[i]
-  mf$Sample = names(samples_sublines)[i]
-  bp$GOtype <- "bp"
-  mf$GOtype <- "mf"
-  GO_samp <- rbind(bp, mf)
-  GO_df_DEG_sublines[[names(samples_sublines)[i]]] <- GO_samp
-  i = i + 1
+# Functions
+## GO CI Method
+CI_method <- function(dat) {
+  ls_all = list()
+  for (vs in seq(100)) {
+    ls_keep = list()
+    for (r in seq(nrow(dat))) {
+      # print(r)
+      val <- 1-dat$P.value[r]
+      rn <- runif(n=1, min=1e-12, max=.9999999999)
+      if (rn < val) {
+        ls_keep = append(ls_keep, dat$numGO[r])
+      }
+    }
+    ls_all = append(ls_all, list(ls_keep))
+  }
+  ls_df <- do.call("cbind", ls_all)
+  ls_df
 }
 
-## Compile into common subline dataframe
-allGO_data_DEG_sublines = do.call(rbind, GO_df_DEG_sublines)
-allGO_data_DEG_sublines$logp <- -log10(allGO_data_DEG_sublines$P.value)
-allGO_data_DEG_sublines$logq <- -log10(allGO_data_DEG_sublines$Adjusted.P.value)
-allGO_data_DEG_sublines$numGO <- str_extract(allGO_data_DEG_sublines$Term, "GO:[0-9]{1,}")
-
-## Keep only significant GO terms
-sig_GO_sublines <- subset(allGO_data_DEG_sublines, Adjusted.P.value < 0.05)
-
-## Identify significant GO terms by subline GO type for scRNAseq DEGs
-sig_GO_DF_DS3 <- subset(sig_GO_sublines, Sample == "DS3")
-sig_GO_DF_DS3_BP <- subset(sig_GO_DF_DS3, GOtype == "bp")
-sig_GO_DF_DS3_MF <- subset(sig_GO_DF_DS3, GOtype == "mf")
-
-sig_GO_DF_DS6 <- subset(sig_GO_sublines, Sample == "DS6")
-sig_GO_DF_DS6_BP <- subset(sig_GO_DF_DS6, GOtype == "bp")
-sig_GO_DF_DS6_MF <- subset(sig_GO_DF_DS6, GOtype == "mf")
-
-sig_GO_DF_DS7 <- subset(sig_GO_sublines, Sample == "DS7")
-sig_GO_DF_DS7_BP <- subset(sig_GO_DF_DS7, GOtype == "bp")
-sig_GO_DF_DS7_MF <- subset(sig_GO_DF_DS7, GOtype == "mf")
-
-sig_GO_DF_DS8 <- subset(sig_GO_sublines, Sample == "DS8")
-sig_GO_DF_DS8_BP <- subset(sig_GO_DF_DS8, GOtype == "bp")
-sig_GO_DF_DS8_MF <- subset(sig_GO_DF_DS8, GOtype == "mf")
-
-sig_GO_DF_DS9 <- subset(sig_GO_sublines, Sample == "DS9")
-sig_GO_DF_DS9_BP <- subset(sig_GO_DF_DS9, GOtype == "bp")
-sig_GO_DF_DS9_MF <- subset(sig_GO_DF_DS9, GOtype == "mf")
-
-# Create list of IMPACT mutations for sublines
-samples_muts_sublines <- list("DS3" = unique(subset(test_s4_dedup, Impact %in% c("LOW", "MODERATE", "HIGH"))$Symbol),
-                              "DS6" = unique(subset(test_s5_dedup, Impact %in% c("LOW", "MODERATE", "HIGH"))$Symbol),
-                              "DS7" = unique(subset(test_s6_dedup, Impact %in% c("LOW", "MODERATE", "HIGH"))$Symbol),
-                              "DS8" = unique(subset(test_s7_dedup, Impact %in% c("LOW", "MODERATE", "HIGH"))$Symbol),
-                              "DS9" = unique(subset(test_s8_dedup, Impact %in% c("LOW", "MODERATE", "HIGH"))$Symbol))
-
-## Create dataframe of GO terms associated with subline mutations
-muts_GO_sublines <- list()
-i = 1
-for (s in samples_muts_sublines) {
-  enriched <- enrichr(s, dbs)
-  bp <- enriched[["GO_Biological_Process_2018"]]
-  mf <- enriched[["GO_Molecular_Function_2018"]]
-  bp$Sample = names(samples_muts_sublines)[i]
-  mf$Sample = names(samples_muts_sublines)[i]
-  bp$GOtype <- "bp"
-  mf$GOtype <- "mf"
-  GO_samp <- rbind(bp, mf)
-  muts_GO_sublines[[names(samples_muts_sublines)[i]]] <- GO_samp
-  i = i + 1
+## Perform semantic similarity on resampled p-values
+GSS_out <- function(d1, d2, hs_type) {
+  ls_cxn = list()
+  for (i in seq(10)) {
+    # for (i in seq(100)) {
+    print(i)
+    # cxn_sub <- mgoSim(unlist(CI_method(dat = d1)[,i]),
+    #                   unlist(CI_method(dat = d2)[,i]),
+    #                   semData = hs_type, measure = "Wang", combine = "BMA")
+    cxn_sub <- goSim(unlist(CI_method(dat = d1)[,i]),
+                     unlist(CI_method(dat = d2)[,i]),
+                     semData = hs_type, measure = "Wang")
+    ls_cxn[[i]] <- cxn_sub
+  }
+  ls_cxn
 }
 
-## Annotate dataframe with key terms (subset on below)
-muts_GO_all_sublines = do.call(rbind, muts_GO_sublines)
-muts_GO_all_sublines$logp <- -log10(muts_GO_all_sublines$P.value)
-muts_GO_all_sublines$logq <- -log10(muts_GO_all_sublines$Adjusted.P.value)
-muts_GO_all_sublines$numGO <- str_extract(muts_GO_all_sublines$Term, "GO:[0-9]{1,}")
+## Function to find enriched gene results - experimental
+enrichResults_exp <- function(geneList) {
+  GO_list <- list()
+  i = 1
+  for (s in geneList) {
+    exp_genes <- s
+    enriched <- enrichr(exp_genes, dbs)
+    bp <- enriched[["GO_Biological_Process_2018"]]
+    mf <- enriched[["GO_Molecular_Function_2018"]]
+    cc <- enriched[["GO_Cellular_Component_2018"]]
+    bp$Sample = names(geneList)[i]
+    mf$Sample = names(geneList)[i]
+    cc$Sample = names(geneList)[i]
+    bp$GOtype <- "bp"
+    mf$GOtype <- "mf"
+    cc$GOtype <- "cc"
+    GO_samp <- rbind(bp, mf, cc)
+    GO_list[[names(geneList)[i]]] <- GO_samp
+    i = i + 1
+  }
+  all_GO_list = do.call(rbind, GO_list)
+  all_GO_list$logp <- -log10(all_GO_list$P.value)
+  all_GO_list$logq <- -log10(all_GO_list$Adjusted.P.value)
+  all_GO_list$numGO <- str_extract(all_GO_list$Term, "GO:[0-9]{1,}")
+  all_GO_list
+}
 
-## Keep only significant GO terms
-muts_GO_sig_sublines <- subset(muts_GO_all_sublines, P.value < 0.05)
+## Function to find enriched gene results - simulated (sampling random genes)
+enrichResults_sim <- function(geneList) {
+  GO_list <- list()
+  i = 1
+  for (s in geneList) {
+    sim_genes <- sample(x = genes_symbol, size = length(s), replace = FALSE)
+    enriched <- enrichr(sim_genes, dbs)
+    bp <- enriched[["GO_Biological_Process_2018"]]
+    mf <- enriched[["GO_Molecular_Function_2018"]]
+    cc <- enriched[["GO_Cellular_Component_2018"]]
+    bp$Sample = names(geneList)[i]
+    mf$Sample = names(geneList)[i]
+    cc$Sample = names(geneList)[i]
+    bp$GOtype <- "bp"
+    mf$GOtype <- "mf"
+    cc$GOtype <- "cc"
+    GO_samp <- rbind(bp, mf, cc)
+    GO_list[[names(geneList)[i]]] <- GO_samp
+    i = i + 1
+  }
+  all_GO_list = do.call(rbind, GO_list)
+  all_GO_list$logp <- -log10(all_GO_list$P.value)
+  all_GO_list$logq <- -log10(all_GO_list$Adjusted.P.value)
+  all_GO_list$numGO <- str_extract(all_GO_list$Term, "GO:[0-9]{1,}")
+  all_GO_list
+}
 
-## Identify significant GO terms by subline and GO type for IMPACT mutations
-muts_GO_sig_DS3 <- subset(muts_GO_sig_sublines, Sample == "DS3")
-muts_GO_sig_DS3_BP <- subset(muts_GO_sig_DS3, GOtype == "bp")
-muts_GO_sig_DS3_MF <- subset(muts_GO_sig_DS3, GOtype == "mf")
+# Experimental
+## Quantify simulated CLV
+### DEGs
+sig_GO_DF_exp_RNA_VU <- subset(enrichResults_exp(geneList = samples_CLV),
+                               Sample == "VU")
+sig_GO_DF_exp_RNA_VU_BP <- subset(sig_GO_DF_exp_RNA_VU, GOtype == "bp")
+sig_GO_DF_exp_RNA_VU_MF <- subset(sig_GO_DF_exp_RNA_VU, GOtype == "mf")
+sig_GO_DF_exp_RNA_VU_CC <- subset(sig_GO_DF_exp_RNA_VU, GOtype == "cc")
 
-muts_GO_sig_DS6 <- subset(muts_GO_sig_sublines, Sample == "DS6")
-muts_GO_sig_DS6_BP <- subset(muts_GO_sig_DS6, GOtype == "bp")
-muts_GO_sig_DS6_MF <- subset(muts_GO_sig_DS6, GOtype == "mf")
+sig_GO_DF_exp_RNA_MGH <- subset(enrichResults_exp(geneList = samples_CLV),
+                                Sample == "MGH")
+sig_GO_DF_exp_RNA_MGH_BP <- subset(sig_GO_DF_exp_RNA_MGH, GOtype == "bp")
+sig_GO_DF_exp_RNA_MGH_MF <- subset(sig_GO_DF_exp_RNA_MGH, GOtype == "mf")
+sig_GO_DF_exp_RNA_MGH_CC <- subset(sig_GO_DF_exp_RNA_MGH, GOtype == "cc")
 
-muts_GO_sig_DS7 <- subset(muts_GO_sig_sublines, Sample == "DS7")
-muts_GO_sig_DS7_BP <- subset(muts_GO_sig_DS7, GOtype == "bp")
-muts_GO_sig_DS7_MF <- subset(muts_GO_sig_DS7, GOtype == "mf")
+sig_GO_DF_exp_RNA_BR1 <- subset(enrichResults_exp(geneList = samples_CLV),
+                                Sample == "BR1")
+sig_GO_DF_exp_RNA_BR1_BP <- subset(sig_GO_DF_exp_RNA_BR1, GOtype == "bp")
+sig_GO_DF_exp_RNA_BR1_MF <- subset(sig_GO_DF_exp_RNA_BR1, GOtype == "mf")
+sig_GO_DF_exp_RNA_BR1_CC <- subset(sig_GO_DF_exp_RNA_BR1, GOtype == "cc")
 
-muts_GO_sig_DS8 <- subset(muts_GO_sig_sublines, Sample == "DS8")
-muts_GO_sig_DS8_BP <- subset(muts_GO_sig_DS8, GOtype == "bp")
-muts_GO_sig_DS8_MF <- subset(muts_GO_sig_DS8, GOtype == "mf")
+### Mutations
+sig_GO_DF_exp_WXS_VU <- subset(enrichResults_exp(geneList = samples_muts_CLV),
+                               Sample == "VU")
+sig_GO_DF_exp_WXS_VU_BP <- subset(sig_GO_DF_exp_WXS_VU, GOtype == "bp")
+sig_GO_DF_exp_WXS_VU_MF <- subset(sig_GO_DF_exp_WXS_VU, GOtype == "mf")
+sig_GO_DF_exp_WXS_VU_CC <- subset(sig_GO_DF_exp_WXS_VU, GOtype == "cc")
 
-muts_GO_sig_DS9 <- subset(muts_GO_sig_sublines, Sample == "DS9")
-muts_GO_sig_DS9_BP <- subset(muts_GO_sig_DS9, GOtype == "bp")
-muts_GO_sig_DS9_MF <- subset(muts_GO_sig_DS9, GOtype == "mf")
+sig_GO_DF_exp_WXS_MGH <- subset(enrichResults_exp(geneList = samples_muts_CLV),
+                                Sample == "MGH")
+sig_GO_DF_exp_WXS_MGH_BP <- subset(sig_GO_DF_exp_WXS_MGH, GOtype == "bp")
+sig_GO_DF_exp_WXS_MGH_MF <- subset(sig_GO_DF_exp_WXS_MGH, GOtype == "mf")
+sig_GO_DF_exp_WXS_MGH_CC <- subset(sig_GO_DF_exp_WXS_MGH, GOtype == "cc")
 
-## Genomic --> transcriptomic connection 
-## Will be 10 comparisons - 5 groups, 2 ontologies each
-### DS3
-DS3_BP <- mgoSim(muts_GO_sig_DS3_BP$numGO, sig_GO_DF_DS3_BP$numGO, semData=hsGO_bp, measure="Wang", combine="BMA")
-DS3_MF <- mgoSim(muts_GO_sig_DS3_MF$numGO, sig_GO_DF_DS3_MF$numGO, semData=hsGO_mf, measure="Wang", combine="BMA")
+sig_GO_DF_exp_WXS_BR1 <- subset(enrichResults_exp(geneList = samples_muts_CLV),
+                                Sample == "BR1")
+sig_GO_DF_exp_WXS_BR1_BP <- subset(sig_GO_DF_exp_WXS_BR1, GOtype == "bp")
+sig_GO_DF_exp_WXS_BR1_MF <- subset(sig_GO_DF_exp_WXS_BR1, GOtype == "mf")
+sig_GO_DF_exp_WXS_BR1_CC <- subset(sig_GO_DF_exp_WXS_BR1, GOtype == "cc")
 
-### DS6
-DS6_BP <- mgoSim(muts_GO_sig_DS6_BP$numGO, sig_GO_DF_DS6_BP$numGO, semData=hsGO_bp, measure="Wang", combine="BMA")
-DS6_MF <- mgoSim(muts_GO_sig_DS6_MF$numGO, sig_GO_DF_DS6_MF$numGO, semData=hsGO_mf, measure="Wang", combine="BMA")
+## Quantify expulated sublines
+### DEGs
+sig_GO_DF_exp_RNA_DS3 <- subset(enrichResults_exp(geneList = samples_sublines),
+                                Sample == "DS3")
+sig_GO_DF_exp_RNA_DS3_BP <- subset(sig_GO_DF_exp_RNA_DS3, GOtype == "bp")
+sig_GO_DF_exp_RNA_DS3_MF <- subset(sig_GO_DF_exp_RNA_DS3, GOtype == "mf")
+sig_GO_DF_exp_RNA_DS3_CC <- subset(sig_GO_DF_exp_RNA_DS3, GOtype == "cc")
 
-### DS7
-DS7_BP <- mgoSim(muts_GO_sig_DS7_BP$numGO, sig_GO_DF_DS7_BP$numGO, semData=hsGO_bp, measure="Wang", combine="BMA")
-DS7_MF <- mgoSim(muts_GO_sig_DS7_MF$numGO, sig_GO_DF_DS7_MF$numGO, semData=hsGO_mf, measure="Wang", combine="BMA")
+sig_GO_DF_exp_RNA_DS6 <- subset(enrichResults_exp(geneList = samples_sublines),
+                                Sample == "DS6")
+sig_GO_DF_exp_RNA_DS6_BP <- subset(sig_GO_DF_exp_RNA_DS6, GOtype == "bp")
+sig_GO_DF_exp_RNA_DS6_MF <- subset(sig_GO_DF_exp_RNA_DS6, GOtype == "mf")
+sig_GO_DF_exp_RNA_DS6_CC <- subset(sig_GO_DF_exp_RNA_DS6, GOtype == "cc")
 
-### DS8
-DS8_BP <- mgoSim(muts_GO_sig_DS8_BP$numGO, sig_GO_DF_DS8_BP$numGO, semData=hsGO_bp, measure="Wang", combine="BMA")
-DS8_MF <- mgoSim(muts_GO_sig_DS8_MF$numGO, sig_GO_DF_DS8_MF$numGO, semData=hsGO_mf, measure="Wang", combine="BMA")
+sig_GO_DF_exp_RNA_DS7 <- subset(enrichResults_exp(geneList = samples_sublines),
+                                Sample == "DS7")
+sig_GO_DF_exp_RNA_DS7_BP <- subset(sig_GO_DF_exp_RNA_DS7, GOtype == "bp")
+sig_GO_DF_exp_RNA_DS7_MF <- subset(sig_GO_DF_exp_RNA_DS7, GOtype == "mf")
+sig_GO_DF_exp_RNA_DS7_CC <- subset(sig_GO_DF_exp_RNA_DS7, GOtype == "cc")
 
-### DS9
-DS9_BP <- mgoSim(muts_GO_sig_DS9_BP$numGO, sig_GO_DF_DS9_BP$numGO, semData=hsGO_bp, measure="Wang", combine="BMA")
-DS9_MF <- mgoSim(muts_GO_sig_DS9_MF$numGO, sig_GO_DF_DS9_MF$numGO, semData=hsGO_mf, measure="Wang", combine="BMA")
+sig_GO_DF_exp_RNA_DS8 <- subset(enrichResults_exp(geneList = samples_sublines),
+                                Sample == "DS8")
+sig_GO_DF_exp_RNA_DS8_BP <- subset(sig_GO_DF_exp_RNA_DS8, GOtype == "bp")
+sig_GO_DF_exp_RNA_DS8_MF <- subset(sig_GO_DF_exp_RNA_DS8, GOtype == "mf")
+sig_GO_DF_exp_RNA_DS8_CC <- subset(sig_GO_DF_exp_RNA_DS8, GOtype == "cc")
 
-## Compile into common dataframe
-semSimDF_sublines <- data.frame(BP = c(DS3_BP, DS6_BP, DS7_BP, DS8_BP, DS9_BP),
-                                MF = c(DS3_MF, DS6_MF, DS7_MF, DS8_MF, DS9_MF))
-semSimDF_sublines$id <- c('DS3', 'DS6', 'DS7', 'DS8', 'DS9')
-ssDF_sublines <- melt(semSimDF_sublines, measure.vars = c("BP", "MF"), id.vars = "id")
+sig_GO_DF_exp_RNA_DS9 <- subset(enrichResults_exp(geneList = samples_sublines),
+                                Sample == "DS9")
+sig_GO_DF_exp_RNA_DS9_BP <- subset(sig_GO_DF_exp_RNA_DS9, GOtype == "bp")
+sig_GO_DF_exp_RNA_DS9_MF <- subset(sig_GO_DF_exp_RNA_DS9, GOtype == "mf")
+sig_GO_DF_exp_RNA_DS9_CC <- subset(sig_GO_DF_exp_RNA_DS9, GOtype == "cc")
 
-## Plot unique GO ontology type
-### BP
-ssDF_sublines_BP <- melt(semSimDF_sublines, measure.vars = c("BP"), id.vars = "id")
-ggplot(ssDF_sublines_BP, aes(x = id, y = value, fill = id)) +
-  geom_bar(stat = "identity", position = "dodge", color = "black") +
-  theme_classic() + labs(x = "Subline", y = "GO Semantic Similarity") +
-  ylim(0,0.5) +
-  geom_hline(aes(yintercept = ssDF_CLV_BP[1,3]), linetype = "dashed", color = "blue") +
-  geom_hline(aes(yintercept = ssDF_CLV_BP[2,3]), linetype = "dashed", color = "green") +
-  geom_hline(aes(yintercept = ssDF_CLV_BP[3,3]), linetype = "dashed", color = "red") +
-  scale_fill_manual(values = c("brown", "deeppink", "darkorchid", "seagreen", "gold"),
-                    name = "none") +
-  ggtitle("Biological Process") +
+
+### Mutations
+sig_GO_DF_exp_WXS_DS3 <- subset(enrichResults_exp(geneList = samples_muts_sublines),
+                                Sample == "DS3")
+sig_GO_DF_exp_WXS_DS3_BP <- subset(sig_GO_DF_exp_WXS_DS3, GOtype == "bp")
+sig_GO_DF_exp_WXS_DS3_MF <- subset(sig_GO_DF_exp_WXS_DS3, GOtype == "mf")
+sig_GO_DF_exp_WXS_DS3_CC <- subset(sig_GO_DF_exp_WXS_DS3, GOtype == "cc")
+
+sig_GO_DF_exp_WXS_DS6 <- subset(enrichResults_exp(geneList = samples_muts_sublines),
+                                Sample == "DS6")
+sig_GO_DF_exp_WXS_DS6_BP <- subset(sig_GO_DF_exp_WXS_DS6, GOtype == "bp")
+sig_GO_DF_exp_WXS_DS6_MF <- subset(sig_GO_DF_exp_WXS_DS6, GOtype == "mf")
+sig_GO_DF_exp_WXS_DS6_CC <- subset(sig_GO_DF_exp_WXS_DS6, GOtype == "cc")
+
+sig_GO_DF_exp_WXS_DS7 <- subset(enrichResults_exp(geneList = samples_muts_sublines),
+                                Sample == "DS7")
+sig_GO_DF_exp_WXS_DS7_BP <- subset(sig_GO_DF_exp_WXS_DS7, GOtype == "bp")
+sig_GO_DF_exp_WXS_DS7_MF <- subset(sig_GO_DF_exp_WXS_DS7, GOtype == "mf")
+sig_GO_DF_exp_WXS_DS7_CC <- subset(sig_GO_DF_exp_WXS_DS7, GOtype == "cc")
+
+sig_GO_DF_exp_WXS_DS8 <- subset(enrichResults_exp(geneList = samples_muts_sublines),
+                                Sample == "DS8")
+sig_GO_DF_exp_WXS_DS8_BP <- subset(sig_GO_DF_exp_WXS_DS8, GOtype == "bp")
+sig_GO_DF_exp_WXS_DS8_MF <- subset(sig_GO_DF_exp_WXS_DS8, GOtype == "mf")
+sig_GO_DF_exp_WXS_DS8_CC <- subset(sig_GO_DF_exp_WXS_DS8, GOtype == "cc")
+
+sig_GO_DF_exp_WXS_DS9 <- subset(enrichResults_exp(geneList = samples_muts_sublines),
+                                Sample == "DS9")
+sig_GO_DF_exp_WXS_DS9_BP <- subset(sig_GO_DF_exp_WXS_DS9, GOtype == "bp")
+sig_GO_DF_exp_WXS_DS9_MF <- subset(sig_GO_DF_exp_WXS_DS9, GOtype == "mf")
+sig_GO_DF_exp_WXS_DS9_CC <- subset(sig_GO_DF_exp_WXS_DS9, GOtype == "cc")
+
+
+# Simulated
+## Quantify simulated CLV
+### DEGs
+sig_GO_DF_sim_RNA_VU <- subset(enrichResults_sim(geneList = samples_CLV),
+                               Sample == "VU")
+sig_GO_DF_sim_RNA_VU_BP <- subset(sig_GO_DF_sim_RNA_VU, GOtype == "bp")
+sig_GO_DF_sim_RNA_VU_MF <- subset(sig_GO_DF_sim_RNA_VU, GOtype == "mf")
+sig_GO_DF_sim_RNA_VU_CC <- subset(sig_GO_DF_sim_RNA_VU, GOtype == "cc")
+
+sig_GO_DF_sim_RNA_MGH <- subset(enrichResults_sim(geneList = samples_CLV),
+                                Sample == "MGH")
+sig_GO_DF_sim_RNA_MGH_BP <- subset(sig_GO_DF_sim_RNA_MGH, GOtype == "bp")
+sig_GO_DF_sim_RNA_MGH_MF <- subset(sig_GO_DF_sim_RNA_MGH, GOtype == "mf")
+sig_GO_DF_sim_RNA_MGH_CC <- subset(sig_GO_DF_sim_RNA_MGH, GOtype == "cc")
+
+sig_GO_DF_sim_RNA_BR1 <- subset(enrichResults_sim(geneList = samples_CLV),
+                                Sample == "BR1")
+sig_GO_DF_sim_RNA_BR1_BP <- subset(sig_GO_DF_sim_RNA_BR1, GOtype == "bp")
+sig_GO_DF_sim_RNA_BR1_MF <- subset(sig_GO_DF_sim_RNA_BR1, GOtype == "mf")
+sig_GO_DF_sim_RNA_BR1_CC <- subset(sig_GO_DF_sim_RNA_BR1, GOtype == "cc")
+
+### Mutations
+sig_GO_DF_sim_WXS_VU <- subset(enrichResults_sim(geneList = samples_muts_CLV),
+                               Sample == "VU")
+sig_GO_DF_sim_WXS_VU_BP <- subset(sig_GO_DF_sim_WXS_VU, GOtype == "bp")
+sig_GO_DF_sim_WXS_VU_MF <- subset(sig_GO_DF_sim_WXS_VU, GOtype == "mf")
+sig_GO_DF_sim_WXS_VU_CC <- subset(sig_GO_DF_sim_WXS_VU, GOtype == "cc")
+
+sig_GO_DF_sim_WXS_MGH <- subset(enrichResults_sim(geneList = samples_muts_CLV),
+                                Sample == "MGH")
+sig_GO_DF_sim_WXS_MGH_BP <- subset(sig_GO_DF_sim_WXS_MGH, GOtype == "bp")
+sig_GO_DF_sim_WXS_MGH_MF <- subset(sig_GO_DF_sim_WXS_MGH, GOtype == "mf")
+sig_GO_DF_sim_WXS_MGH_CC <- subset(sig_GO_DF_sim_WXS_MGH, GOtype == "cc")
+
+sig_GO_DF_sim_WXS_BR1 <- subset(enrichResults_sim(geneList = samples_muts_CLV),
+                                Sample == "BR1")
+sig_GO_DF_sim_WXS_BR1_BP <- subset(sig_GO_DF_sim_WXS_BR1, GOtype == "bp")
+sig_GO_DF_sim_WXS_BR1_MF <- subset(sig_GO_DF_sim_WXS_BR1, GOtype == "mf")
+sig_GO_DF_sim_WXS_BR1_CC <- subset(sig_GO_DF_sim_WXS_BR1, GOtype == "cc")
+
+## Quantify simulated sublines
+### DEGs
+sig_GO_DF_sim_RNA_DS3 <- subset(enrichResults_sim(geneList = samples_sublines),
+                                Sample == "DS3")
+sig_GO_DF_sim_RNA_DS3_BP <- subset(sig_GO_DF_sim_RNA_DS3, GOtype == "bp")
+sig_GO_DF_sim_RNA_DS3_MF <- subset(sig_GO_DF_sim_RNA_DS3, GOtype == "mf")
+sig_GO_DF_sim_RNA_DS3_CC <- subset(sig_GO_DF_sim_RNA_DS3, GOtype == "cc")
+
+sig_GO_DF_sim_RNA_DS6 <- subset(enrichResults_sim(geneList = samples_sublines),
+                                Sample == "DS6")
+sig_GO_DF_sim_RNA_DS6_BP <- subset(sig_GO_DF_sim_RNA_DS6, GOtype == "bp")
+sig_GO_DF_sim_RNA_DS6_MF <- subset(sig_GO_DF_sim_RNA_DS6, GOtype == "mf")
+sig_GO_DF_sim_RNA_DS6_CC <- subset(sig_GO_DF_sim_RNA_DS6, GOtype == "cc")
+
+sig_GO_DF_sim_RNA_DS7 <- subset(enrichResults_sim(geneList = samples_sublines),
+                                Sample == "DS7")
+sig_GO_DF_sim_RNA_DS7_BP <- subset(sig_GO_DF_sim_RNA_DS7, GOtype == "bp")
+sig_GO_DF_sim_RNA_DS7_MF <- subset(sig_GO_DF_sim_RNA_DS7, GOtype == "mf")
+sig_GO_DF_sim_RNA_DS7_CC <- subset(sig_GO_DF_sim_RNA_DS7, GOtype == "cc")
+
+sig_GO_DF_sim_RNA_DS8 <- subset(enrichResults_sim(geneList = samples_sublines),
+                                Sample == "DS8")
+sig_GO_DF_sim_RNA_DS8_BP <- subset(sig_GO_DF_sim_RNA_DS8, GOtype == "bp")
+sig_GO_DF_sim_RNA_DS8_MF <- subset(sig_GO_DF_sim_RNA_DS8, GOtype == "mf")
+sig_GO_DF_sim_RNA_DS8_CC <- subset(sig_GO_DF_sim_RNA_DS8, GOtype == "cc")
+
+sig_GO_DF_sim_RNA_DS9 <- subset(enrichResults_sim(geneList = samples_sublines),
+                                Sample == "DS9")
+sig_GO_DF_sim_RNA_DS9_BP <- subset(sig_GO_DF_sim_RNA_DS9, GOtype == "bp")
+sig_GO_DF_sim_RNA_DS9_MF <- subset(sig_GO_DF_sim_RNA_DS9, GOtype == "mf")
+sig_GO_DF_sim_RNA_DS9_CC <- subset(sig_GO_DF_sim_RNA_DS9, GOtype == "cc")
+
+### Mutations
+sig_GO_DF_sim_WXS_DS3 <- subset(enrichResults_sim(geneList = samples_muts_sublines),
+                                Sample == "DS3")
+sig_GO_DF_sim_WXS_DS3_BP <- subset(sig_GO_DF_sim_WXS_DS3, GOtype == "bp")
+sig_GO_DF_sim_WXS_DS3_MF <- subset(sig_GO_DF_sim_WXS_DS3, GOtype == "mf")
+sig_GO_DF_sim_WXS_DS3_CC <- subset(sig_GO_DF_sim_WXS_DS3, GOtype == "cc")
+
+sig_GO_DF_sim_WXS_DS6 <- subset(enrichResults_sim(geneList = samples_muts_sublines),
+                                Sample == "DS6")
+sig_GO_DF_sim_WXS_DS6_BP <- subset(sig_GO_DF_sim_WXS_DS6, GOtype == "bp")
+sig_GO_DF_sim_WXS_DS6_MF <- subset(sig_GO_DF_sim_WXS_DS6, GOtype == "mf")
+sig_GO_DF_sim_WXS_DS6_CC <- subset(sig_GO_DF_sim_WXS_DS6, GOtype == "cc")
+
+sig_GO_DF_sim_WXS_DS7 <- subset(enrichResults_sim(geneList = samples_muts_sublines),
+                                Sample == "DS7")
+sig_GO_DF_sim_WXS_DS7_BP <- subset(sig_GO_DF_sim_WXS_DS7, GOtype == "bp")
+sig_GO_DF_sim_WXS_DS7_MF <- subset(sig_GO_DF_sim_WXS_DS7, GOtype == "mf")
+sig_GO_DF_sim_WXS_DS7_CC <- subset(sig_GO_DF_sim_WXS_DS7, GOtype == "cc")
+
+sig_GO_DF_sim_WXS_DS8 <- subset(enrichResults_sim(geneList = samples_muts_sublines),
+                                Sample == "DS8")
+sig_GO_DF_sim_WXS_DS8_BP <- subset(sig_GO_DF_sim_WXS_DS8, GOtype == "bp")
+sig_GO_DF_sim_WXS_DS8_MF <- subset(sig_GO_DF_sim_WXS_DS8, GOtype == "mf")
+sig_GO_DF_sim_WXS_DS8_CC <- subset(sig_GO_DF_sim_WXS_DS8, GOtype == "cc")
+
+sig_GO_DF_sim_WXS_DS9 <- subset(enrichResults_sim(geneList = samples_muts_sublines),
+                                Sample == "DS9")
+sig_GO_DF_sim_WXS_DS9_BP <- subset(sig_GO_DF_sim_WXS_DS9, GOtype == "bp")
+sig_GO_DF_sim_WXS_DS9_MF <- subset(sig_GO_DF_sim_WXS_DS9, GOtype == "mf")
+sig_GO_DF_sim_WXS_DS9_CC <- subset(sig_GO_DF_sim_WXS_DS9, GOtype == "cc")
+
+
+# Calculate Semantic similarity
+## CC
+### Experimental
+BR1_CC_exp <- GSS_out(d1 = sig_GO_DF_exp_WXS_BR1_CC, d2 = sig_GO_DF_exp_RNA_BR1_CC, hs_type = hsGO_cc)
+MGH_CC_exp <- GSS_out(d1 = sig_GO_DF_exp_WXS_MGH_CC, d2 = sig_GO_DF_exp_RNA_MGH_CC, hs_type = hsGO_cc)
+VU_CC_exp <- GSS_out(d1 = sig_GO_DF_exp_WXS_VU_CC, d2 = sig_GO_DF_exp_RNA_VU_CC, hs_type = hsGO_cc)
+DS3_CC_exp <- GSS_out(d1 = sig_GO_DF_exp_WXS_DS3_CC, d2 = sig_GO_DF_exp_RNA_DS3_CC, hs_type = hsGO_cc)
+DS6_CC_exp <- GSS_out(d1 = sig_GO_DF_exp_WXS_DS6_CC, d2 = sig_GO_DF_exp_RNA_DS6_CC, hs_type = hsGO_cc)
+DS7_CC_exp <- GSS_out(d1 = sig_GO_DF_exp_WXS_DS7_CC, d2 = sig_GO_DF_exp_RNA_DS7_CC, hs_type = hsGO_cc)
+DS8_CC_exp <- GSS_out(d1 = sig_GO_DF_exp_WXS_DS8_CC, d2 = sig_GO_DF_exp_RNA_DS8_CC, hs_type = hsGO_cc)
+DS9_CC_exp <- GSS_out(d1 = sig_GO_DF_exp_WXS_DS9_CC, d2 = sig_GO_DF_exp_RNA_DS9_CC, hs_type = hsGO_cc)
+
+### Simulated
+BR1_CC_sim <- GSS_out(d1 = sig_GO_DF_sim_WXS_BR1_CC, d2 = sig_GO_DF_sim_RNA_BR1_CC, hs_type = hsGO_cc)
+MGH_CC_sim <- GSS_out(d1 = sig_GO_DF_sim_WXS_MGH_CC, d2 = sig_GO_DF_sim_RNA_MGH_CC, hs_type = hsGO_cc)
+VU_CC_sim <- GSS_out(d1 = sig_GO_DF_sim_WXS_VU_CC, d2 = sig_GO_DF_sim_RNA_VU_CC, hs_type = hsGO_cc)
+DS3_CC_sim <- GSS_out(d1 = sig_GO_DF_sim_WXS_DS3_CC, d2 = sig_GO_DF_sim_RNA_DS3_CC, hs_type = hsGO_cc)
+DS6_CC_sim <- GSS_out(d1 = sig_GO_DF_sim_WXS_DS6_CC, d2 = sig_GO_DF_sim_RNA_DS6_CC, hs_type = hsGO_cc)
+DS7_CC_sim <- GSS_out(d1 = sig_GO_DF_sim_WXS_DS7_CC, d2 = sig_GO_DF_sim_RNA_DS7_CC, hs_type = hsGO_cc)
+DS8_CC_sim <- GSS_out(d1 = sig_GO_DF_sim_WXS_DS8_CC, d2 = sig_GO_DF_sim_RNA_DS8_CC, hs_type = hsGO_cc)
+DS9_CC_sim <- GSS_out(d1 = sig_GO_DF_sim_WXS_DS9_CC, d2 = sig_GO_DF_sim_RNA_DS9_CC, hs_type = hsGO_cc)
+
+## MF
+### Experimental
+BR1_MF_exp <- GSS_out(d1 = sig_GO_DF_exp_WXS_BR1_MF, d2 = sig_GO_DF_exp_RNA_BR1_MF, hs_type = hsGO_mf)
+MGH_MF_exp <- GSS_out(d1 = sig_GO_DF_exp_WXS_MGH_MF, d2 = sig_GO_DF_exp_RNA_MGH_MF, hs_type = hsGO_mf)
+VU_MF_exp <- GSS_out(d1 = sig_GO_DF_exp_WXS_VU_MF, d2 = sig_GO_DF_exp_RNA_VU_MF, hs_type = hsGO_mf)
+DS3_MF_exp <- GSS_out(d1 = sig_GO_DF_exp_WXS_DS3_MF, d2 = sig_GO_DF_exp_RNA_DS3_MF, hs_type = hsGO_mf)
+DS6_MF_exp <- GSS_out(d1 = sig_GO_DF_exp_WXS_DS6_MF, d2 = sig_GO_DF_exp_RNA_DS6_MF, hs_type = hsGO_mf)
+DS7_MF_exp <- GSS_out(d1 = sig_GO_DF_exp_WXS_DS7_MF, d2 = sig_GO_DF_exp_RNA_DS7_MF, hs_type = hsGO_mf)
+DS8_MF_exp <- GSS_out(d1 = sig_GO_DF_exp_WXS_DS8_MF, d2 = sig_GO_DF_exp_RNA_DS8_MF, hs_type = hsGO_mf)
+DS9_MF_exp <- GSS_out(d1 = sig_GO_DF_exp_WXS_DS9_MF, d2 = sig_GO_DF_exp_RNA_DS9_MF, hs_type = hsGO_mf)
+
+### Simulated
+BR1_MF_sim <- GSS_out(d1 = sig_GO_DF_sim_WXS_BR1_MF, d2 = sig_GO_DF_sim_RNA_BR1_MF, hs_type = hsGO_mf)
+MGH_MF_sim <- GSS_out(d1 = sig_GO_DF_sim_WXS_MGH_MF, d2 = sig_GO_DF_sim_RNA_MGH_MF, hs_type = hsGO_mf)
+VU_MF_sim <- GSS_out(d1 = sig_GO_DF_sim_WXS_VU_MF, d2 = sig_GO_DF_sim_RNA_VU_MF, hs_type = hsGO_mf)
+DS3_MF_sim <- GSS_out(d1 = sig_GO_DF_sim_WXS_DS3_MF, d2 = sig_GO_DF_sim_RNA_DS3_MF, hs_type = hsGO_mf)
+DS6_MF_sim <- GSS_out(d1 = sig_GO_DF_sim_WXS_DS6_MF, d2 = sig_GO_DF_sim_RNA_DS6_MF, hs_type = hsGO_mf)
+DS7_MF_sim <- GSS_out(d1 = sig_GO_DF_sim_WXS_DS7_MF, d2 = sig_GO_DF_sim_RNA_DS7_MF, hs_type = hsGO_mf)
+DS8_MF_sim <- GSS_out(d1 = sig_GO_DF_sim_WXS_DS8_MF, d2 = sig_GO_DF_sim_RNA_DS8_MF, hs_type = hsGO_mf)
+DS9_MF_sim <- GSS_out(d1 = sig_GO_DF_sim_WXS_DS9_MF, d2 = sig_GO_DF_sim_RNA_DS9_MF, hs_type = hsGO_mf)
+
+## BP
+### Experimental
+BR1_BP_exp <- GSS_out(d1 = sig_GO_DF_exp_WXS_BR1_BP, d2 = sig_GO_DF_exp_RNA_BR1_BP, hs_type = hsGO_bp)
+MGH_BP_exp <- GSS_out(d1 = sig_GO_DF_exp_WXS_MGH_BP, d2 = sig_GO_DF_exp_RNA_MGH_BP, hs_type = hsGO_bp)
+VU_BP_exp <- GSS_out(d1 = sig_GO_DF_exp_WXS_VU_BP, d2 = sig_GO_DF_exp_RNA_VU_BP, hs_type = hsGO_bp)
+DS3_BP_exp <- GSS_out(d1 = sig_GO_DF_exp_WXS_DS3_BP, d2 = sig_GO_DF_exp_RNA_DS3_BP, hs_type = hsGO_bp)
+DS6_BP_exp <- GSS_out(d1 = sig_GO_DF_exp_WXS_DS6_BP, d2 = sig_GO_DF_exp_RNA_DS6_BP, hs_type = hsGO_bp)
+DS7_BP_exp <- GSS_out(d1 = sig_GO_DF_exp_WXS_DS7_BP, d2 = sig_GO_DF_exp_RNA_DS7_BP, hs_type = hsGO_bp)
+DS8_BP_exp <- GSS_out(d1 = sig_GO_DF_exp_WXS_DS8_BP, d2 = sig_GO_DF_exp_RNA_DS8_BP, hs_type = hsGO_bp)
+DS9_BP_exp <- GSS_out(d1 = sig_GO_DF_exp_WXS_DS9_BP, d2 = sig_GO_DF_exp_RNA_DS9_BP, hs_type = hsGO_bp)
+
+### Simulated
+BR1_BP_sim <- GSS_out(d1 = sig_GO_DF_sim_WXS_BR1_BP, d2 = sig_GO_DF_sim_RNA_BR1_BP, hs_type = hsGO_bp)
+MGH_BP_sim <- GSS_out(d1 = sig_GO_DF_sim_WXS_MGH_BP, d2 = sig_GO_DF_sim_RNA_MGH_BP, hs_type = hsGO_bp)
+VU_BP_sim <- GSS_out(d1 = sig_GO_DF_sim_WXS_VU_BP, d2 = sig_GO_DF_sim_RNA_VU_BP, hs_type = hsGO_bp)
+DS3_BP_sim <- GSS_out(d1 = sig_GO_DF_sim_WXS_DS3_BP, d2 = sig_GO_DF_sim_RNA_DS3_BP, hs_type = hsGO_bp)
+DS6_BP_sim <- GSS_out(d1 = sig_GO_DF_sim_WXS_DS6_BP, d2 = sig_GO_DF_sim_RNA_DS6_BP, hs_type = hsGO_bp)
+DS7_BP_sim <- GSS_out(d1 = sig_GO_DF_sim_WXS_DS7_BP, d2 = sig_GO_DF_sim_RNA_DS7_BP, hs_type = hsGO_bp)
+DS8_BP_sim <- GSS_out(d1 = sig_GO_DF_sim_WXS_DS8_BP, d2 = sig_GO_DF_sim_RNA_DS8_BP, hs_type = hsGO_bp)
+DS9_BP_sim <- GSS_out(d1 = sig_GO_DF_sim_WXS_DS9_BP, d2 = sig_GO_DF_sim_RNA_DS9_BP, hs_type = hsGO_bp)
+
+# # Save the data (takes hours to run)
+# save(BR1_CC_exp, MGH_CC_exp, VU_CC_exp, DS3_CC_exp, DS6_CC_exp, DS7_CC_exp, DS8_CC_exp, DS9_CC_exp,
+#      BR1_MF_exp, MGH_MF_exp, VU_MF_exp, DS3_MF_exp, DS6_MF_exp, DS7_MF_exp, DS8_MF_exp, DS9_MF_exp,
+#      BR1_BP_exp, MGH_BP_exp, VU_BP_exp, DS3_BP_exp, DS6_BP_exp, DS7_BP_exp, DS8_BP_exp, DS9_BP_exp,
+#      BR1_CC_sim, MGH_CC_sim, VU_CC_sim, DS3_CC_sim, DS6_CC_sim, DS7_CC_sim, DS8_CC_sim, DS9_CC_sim,
+#      BR1_MF_sim, MGH_MF_sim, VU_MF_sim, DS3_MF_sim, DS6_MF_sim, DS7_MF_sim, DS8_MF_sim, DS9_MF_sim,
+#      BR1_BP_sim, MGH_BP_sim, VU_BP_sim, DS3_BP_sim, DS6_BP_sim, DS7_BP_sim, DS8_BP_sim, DS9_BP_sim,
+#      file = "semSim_comparison_hg38_mac_distributionsNoMax.RData")
+
+# Plot simulated data
+# all_dat_sim <- list(vu_bp = VU_BP_sim[[1]], mgh_bp = MGH_BP_sim[[1]], br1_bp = BR1_BP_sim[[1]], ds3_bp = DS3_BP_sim[[1]],
+#                     ds6_bp = DS6_BP_sim[[1]], ds7_bp = DS7_BP_sim[[1]], ds8_bp = DS8_BP_sim[[1]], ds9_bp = DS9_BP_sim[[1]],
+#                     vu_mf = VU_MF_sim[[1]], mgh_mf = MGH_MF_sim[[1]], br1_mf = BR1_MF_sim[[1]], ds3_mf = DS3_MF_sim[[1]],
+#                     ds6_mf = DS6_MF_sim[[1]], ds7_mf = DS7_MF_sim[[1]], ds8_mf = DS8_MF_sim[[1]], ds9_mf = DS9_MF_sim[[1]],
+#                     vu_cc = VU_CC_sim[[1]], mgh_cc = MGH_CC_sim[[1]], br1_cc = BR1_CC_sim[[1]], ds3_cc = DS3_CC_sim[[1]],
+#                     ds6_cc = DS6_CC_sim[[1]], ds7_cc = DS7_CC_sim[[1]], ds8_cc = DS8_CC_sim[[1]], ds9_cc = DS9_CC_sim[[1]])
+
+## Take top 1000 similarity scores (see Methods - top scores are more representative bc low scores are mostly noise)
+all_dat_sim <- list(vu_bp = sort(VU_BP_sim[[1]], decreasing = T)[1:1000], mgh_bp = sort(MGH_BP_sim[[1]], decreasing = T)[1:1000],
+                    br1_bp = sort(BR1_BP_sim[[1]], decreasing = T)[1:1000], ds3_bp = sort(DS3_BP_sim[[1]], decreasing = T)[1:1000],
+                    ds6_bp = sort(DS6_BP_sim[[1]], decreasing = T)[1:1000], ds7_bp = sort(DS7_BP_sim[[1]], decreasing = T)[1:1000],
+                    ds8_bp = sort(DS8_BP_sim[[1]], decreasing = T)[1:1000], ds9_bp = sort(DS9_BP_sim[[1]], decreasing = T)[1:1000],
+                    vu_mf = sort(VU_MF_sim[[1]], decreasing = T)[1:1000], mgh_mf = sort(MGH_MF_sim[[1]], decreasing = T)[1:1000],
+                    br1_mf = sort(BR1_MF_sim[[1]], decreasing = T)[1:1000], ds3_mf = sort(DS3_MF_sim[[1]], decreasing = T)[1:1000],
+                    ds6_mf = sort(DS6_MF_sim[[1]], decreasing = T)[1:1000], ds7_mf = sort(DS7_MF_sim[[1]], decreasing = T)[1:1000],
+                    ds8_mf = sort(DS8_MF_sim[[1]], decreasing = T)[1:1000], ds9_mf = sort(DS9_MF_sim[[1]], decreasing = T)[1:1000],
+                    vu_cc = sort(VU_CC_sim[[1]], decreasing = T)[1:1000], mgh_cc = sort(MGH_CC_sim[[1]], decreasing = T)[1:1000],
+                    br1_cc = sort(BR1_CC_sim[[1]], decreasing = T)[1:1000], ds3_cc = sort(DS3_CC_sim[[1]], decreasing = T)[1:1000],
+                    ds6_cc = sort(DS6_CC_sim[[1]], decreasing = T)[1:1000], ds7_cc = sort(DS7_CC_sim[[1]], decreasing = T)[1:1000],
+                    ds8_cc = sort(DS8_CC_sim[[1]], decreasing = T)[1:1000], ds9_cc = sort(DS9_CC_sim[[1]], decreasing = T)[1:1000])
+
+# Put in common dataframe
+all_dat_df_sim <- as.data.frame(stack(all_dat_sim))
+all_dat_df_sim <- within(all_dat_df_sim,
+                         ind <-data.frame(do.call('rbind',
+                                                  strsplit(as.character(toupper(ind)),
+                                                           '_', fixed=TRUE))))
+all_dat_df_sim <- do.call('data.frame', all_dat_df_sim)
+names(all_dat_df_sim) <- c("value", "Population", "GOtype")
+
+all_dat_df_sim$Population <- factor(all_dat_df_sim$Population,
+                                    levels = c("VU", "MGH", "BR1", "DS3",
+                                               "DS6", "DS7", "DS8", "DS9"))
+all_dat_df_sim$Group <- "Simulated"
+
+# Plot experimental data
+# all_dat_exp <- list(vu_bp = VU_BP_exp[[1]], mgh_bp = MGH_BP_exp[[1]], br1_bp = BR1_BP_exp[[1]], ds3_bp = DS3_BP_exp[[1]],
+#                     ds6_bp = DS6_BP_exp[[1]], ds7_bp = DS7_BP_exp[[1]], ds8_bp = DS8_BP_exp[[1]], ds9_bp = DS9_BP_exp[[1]],
+#                     vu_mf = VU_MF_exp[[1]], mgh_mf = MGH_MF_exp[[1]], br1_mf = BR1_MF_exp[[1]], ds3_mf = DS3_MF_exp[[1]],
+#                     ds6_mf = DS6_MF_exp[[1]], ds7_mf = DS7_MF_exp[[1]], ds8_mf = DS8_MF_exp[[1]], ds9_mf = DS9_MF_exp[[1]],
+#                     vu_cc = VU_CC_exp[[1]], mgh_cc = MGH_CC_exp[[1]], br1_cc = BR1_CC_exp[[1]], ds3_cc = DS3_CC_exp[[1]],
+#                     ds6_cc = DS6_CC_exp[[1]], ds7_cc = DS7_CC_exp[[1]], ds8_cc = DS8_CC_exp[[1]], ds9_cc = DS9_CC_exp[[1]])
+
+## Take top 1000 similarity scores (see Methods - top scores are more representative bc low scores are mostly noise)
+all_dat_exp <- list(vu_bp = sort(VU_BP_exp[[1]], decreasing = T)[1:1000], mgh_bp = sort(MGH_BP_exp[[1]], decreasing = T)[1:1000],
+                    br1_bp = sort(BR1_BP_exp[[1]], decreasing = T)[1:1000], ds3_bp = sort(DS3_BP_exp[[1]], decreasing = T)[1:1000],
+                    ds6_bp = sort(DS6_BP_exp[[1]], decreasing = T)[1:1000], ds7_bp = sort(DS7_BP_exp[[1]], decreasing = T)[1:1000],
+                    ds8_bp = sort(DS8_BP_exp[[1]], decreasing = T)[1:1000], ds9_bp = sort(DS9_BP_exp[[1]], decreasing = T)[1:1000],
+                    vu_mf = sort(VU_MF_exp[[1]], decreasing = T)[1:1000], mgh_mf = sort(MGH_MF_exp[[1]], decreasing = T)[1:1000],
+                    br1_mf = sort(BR1_MF_exp[[1]], decreasing = T)[1:1000], ds3_mf = sort(DS3_MF_exp[[1]], decreasing = T)[1:1000],
+                    ds6_mf = sort(DS6_MF_exp[[1]], decreasing = T)[1:1000], ds7_mf = sort(DS7_MF_exp[[1]], decreasing = T)[1:1000],
+                    ds8_mf = sort(DS8_MF_exp[[1]], decreasing = T)[1:1000], ds9_mf = sort(DS9_MF_exp[[1]], decreasing = T)[1:1000],
+                    vu_cc = sort(VU_CC_exp[[1]], decreasing = T)[1:1000], mgh_cc = sort(MGH_CC_exp[[1]], decreasing = T)[1:1000],
+                    br1_cc = sort(BR1_CC_exp[[1]], decreasing = T)[1:1000], ds3_cc = sort(DS3_CC_exp[[1]], decreasing = T)[1:1000],
+                    ds6_cc = sort(DS6_CC_exp[[1]], decreasing = T)[1:1000], ds7_cc = sort(DS7_CC_exp[[1]], decreasing = T)[1:1000],
+                    ds8_cc = sort(DS8_CC_exp[[1]], decreasing = T)[1:1000], ds9_cc = sort(DS9_CC_exp[[1]], decreasing = T)[1:1000])
+
+# Put in common dataframe
+all_dat_df_exp <- as.data.frame(stack(all_dat_exp))
+all_dat_df_exp <- within(all_dat_df_exp,
+                         ind <-data.frame(do.call('rbind',
+                                                  strsplit(as.character(toupper(ind)),
+                                                           '_', fixed=TRUE))))
+all_dat_df_exp <- do.call('data.frame', all_dat_df_exp)
+names(all_dat_df_exp) <- c("value", "Population", "GOtype")
+
+all_dat_df_exp$Population <- factor(all_dat_df_exp$Population,
+                                    levels = c("VU", "MGH", "BR1", "DS3",
+                                               "DS6", "DS7", "DS8", "DS9"))
+all_dat_df_exp$Group <- "Experimental"
+
+
+# Put data together
+all_dat_df_all <- rbind(all_dat_df_exp, all_dat_df_sim)
+all_dat_df_all$GOtype <- factor(all_dat_df_all$GOtype, levels = c("BP", "MF", "CC"))
+
+# # Plot as boxPlot
+# ggplot(all_dat_df_all, aes(x=Population, y=value, fill = Population, linetype = Group)) +
+#   geom_boxplot() + facet_grid(GOtype ~ ., scales = "free") + theme_bw() +
+#   xlab("Population") + ylab("GO Semantic Similarity") +
+#   scale_fill_manual(values = c("blue", "green", "red", "brown",
+#                                "deeppink", "darkorchid", "seagreen", "gold")) +
+#   theme(
+#     panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+#     plot.title = element_text(size = 16, hjust = 0.5), axis.text=element_text(size=14),
+#     legend.title = element_blank(), axis.title=element_text(size=14),
+#     strip.text = element_text(size = 14), legend.position = "bottom") +
+#   ggsave("GOSemSim_simulated_violinNoOutliers_fromPvalues_hg38_distributionsMax1000.pdf", width = 12, height = 15)
+
+
+## Normalize data
+all_dat_df_sum <- summarySE(all_dat_df_all,
+                            measurevar = "value",
+                            groupvars = c("GOtype", "Population", "Group"))
+all_dat_df_sum_exp <- subset(all_dat_df_sum, Group == "Experimental")
+all_dat_df_sum_sim <- subset(all_dat_df_sum, Group == "Simulated")
+highVal <- all_dat_df_sum_sim$value + all_dat_df_sum_sim$sd
+all_dat_df_sum_exp$compVal <- all_dat_df_sum_exp$value - highVal
+
+
+## Plot as confidence interval relative to simulated baseline (+1SD)
+ggplot(all_dat_df_sum_exp, aes(x=Population, y=compVal, color=Population, group=Population)) +
+  geom_errorbar(aes(ymin=compVal-ci, ymax=compVal+ci), width=0.2, size = 1) +
+  geom_point(size = 1, shape = 21, fill = "white") +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  facet_grid(GOtype ~ ., scales = "free") + theme_bw() +
+  xlab("Population") + ylab("GO Semantic Similarity (relative to baseline)") +
+  scale_color_manual(values = c("blue", "green", "red", "brown",
+                                "deeppink", "darkorchid", "seagreen", "gold")) +
   theme(
     panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-    legend.position = "none",
-    plot.title = element_text(size = 16, hjust = 0.5), axis.text=element_text(size=14),
-    legend.title = element_blank(), axis.title=element_text(size=14)) +
-  ggsave("sublines_GtoTconnection_BP.pdf", width = 4, height = 5)
-
-##### Remove DS8 for paper figure
-ssDF_sublines_BP_removeDS8 <- subset(ssDF_sublines_BP, id != "DS8")
-ggplot(ssDF_sublines_BP_removeDS8, aes(x = id, y = value, fill = id)) +
-  geom_bar(stat = "identity", position = "dodge", color = "black") +
-  theme_classic() + labs(x = "Subline", y = "GO Semantic Similarity") +
-  ylim(0,0.5) +
-  geom_hline(aes(yintercept = ssDF_CLV_BP[1,3]), linetype = "dashed", color = "blue") +
-  geom_hline(aes(yintercept = ssDF_CLV_BP[2,3]), linetype = "dashed", color = "green") +
-  geom_hline(aes(yintercept = ssDF_CLV_BP[3,3]), linetype = "dashed", color = "red") +
-  scale_fill_manual(values = c("brown", "deeppink", "darkorchid", "gold"),
-                    name = "none") +
-  ggtitle("Biological Process") +
-  theme(
-    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-    legend.position = "none",
-    plot.title = element_text(size = 16, hjust = 0.5), axis.text=element_text(size=14),
-    legend.title = element_blank(), axis.title=element_text(size=14)) +
-  ggsave("FIG_4I_left.pdf", width = 4, height = 5)
-
-#### Include DS8, but tint colors not DS8 for emphasis
-ssDF_sublines_BP$Tint <- c(0.3, 0.3, 0.3, 1, 0.3)
-ggplot(ssDF_sublines_BP, aes(x = factor(id, levels = c("DS3", "DS6", "DS7", "DS9", "DS8")), 
-                             y = value, fill = id, alpha = Tint)) +
-  geom_bar(stat = "identity", position = "dodge", color = "black") +
-  theme_classic() + labs(x = "Subline", y = "GO Semantic Similarity") +
-  ylim(0,0.5) + scale_alpha_continuous(range = c(0.3,1)) +
-  geom_hline(aes(yintercept = ssDF_CLV_BP[1,3]), linetype = "dashed", color = "blue") +
-  geom_hline(aes(yintercept = ssDF_CLV_BP[2,3]), linetype = "dashed", color = "green") +
-  geom_hline(aes(yintercept = ssDF_CLV_BP[3,3]), linetype = "dashed", color = "red") +
-  scale_fill_manual(values = c("brown", "deeppink", "darkorchid", "seagreen", "gold"),
-                    name = "none") +
-  ggtitle("Biological Process") +
-  theme(
-    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-    legend.position = "none",
-    plot.title = element_text(size = 16, hjust = 0.5), axis.text=element_text(size=14),
-    legend.title = element_blank(), axis.title=element_text(size=14)) +
-  ggsave("FIG_6E_top.pdf", width = 6, height = 3)
-
-### MF 
-#### DS6 is removed from analyses because only 1 differentially expressed GO term
-#### from the DEGs --> skews the semantic similarity score
-ssDF_sublines_MF <- melt(semSimDF_sublines, measure.vars = c("MF"), id.vars = "id")
-ggplot(ssDF_sublines_MF, aes(x = id, y = value, fill = id)) +
-  geom_bar(stat = "identity", position = "dodge", color = "black") +
-  theme_classic() + labs(x = "Subline", y = "GO Semantic Similarity") +
-  ylim(0,0.35) +
-  geom_hline(aes(yintercept = ssDF_CLV_MF[1,3]), linetype = "dashed", color = "blue") +
-  geom_hline(aes(yintercept = ssDF_CLV_MF[2,3]), linetype = "dashed", color = "green") +
-  geom_hline(aes(yintercept = ssDF_CLV_MF[3,3]), linetype = "dashed", color = "red") +
-  scale_fill_manual(values = c("brown", "deeppink", "darkorchid", "seagreen", "gold"),
-                    name = "none") +
-  ggtitle("Molecular Function") +
-  theme(
-    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-    legend.position = "none",
-    plot.title = element_text(size = 16, hjust = 0.5), axis.text=element_text(size=14),
-    legend.title = element_blank(), axis.title=element_text(size=14)) +
-  ggsave("sublines_GtoTconnection_MF.pdf", width = 4, height = 5)
-
-### Remove DS8 for paper (and DS6 - see above)
-ssDF_sublines_MF_removeDS8_6 <- subset(ssDF_sublines_MF, !id  %in% c("DS6", "DS8"))
-ggplot(ssDF_sublines_MF_removeDS8_6, aes(x = id, y = value, fill = id)) +
-  geom_bar(stat = "identity", position = "dodge", color = "black") +
-  theme_classic() + labs(x = "Subline", y = "GO Semantic Similarity") +
-  ylim(0,0.35) +
-  geom_hline(aes(yintercept = ssDF_CLV_MF[1,3]), linetype = "dashed", color = "blue") +
-  geom_hline(aes(yintercept = ssDF_CLV_MF[2,3]), linetype = "dashed", color = "green") +
-  geom_hline(aes(yintercept = ssDF_CLV_MF[3,3]), linetype = "dashed", color = "red") +
-  scale_fill_manual(values = c("brown", "darkorchid", "gold"),
-                    name = "none") +
-  ggtitle("Molecular Function") +
-  theme(
-    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-    legend.position = "none",
-    plot.title = element_text(size = 16, hjust = 0.5), axis.text=element_text(size=14),
-    legend.title = element_blank(), axis.title=element_text(size=14)) +
-  ggsave("FIG_4I_right.pdf", width = 4, height = 5)
-
-### Include DS8 
-ssDF_sublines_MF_removeDS6 <- subset(ssDF_sublines_MF, !id  %in% c("DS6"))
-ssDF_sublines_MF_removeDS6$Tint <- c(0.3, 0.3, 1, 0.3)
-ggplot(ssDF_sublines_MF_removeDS6, aes(x = factor(id, levels = c("DS3", "DS7", "DS9", "DS8")),
-                                       y = value, fill = id, alpha = Tint)) +
-  geom_bar(stat = "identity", position = "dodge", color = "black") +
-  theme_classic() + labs(x = "Subline", y = "GO Semantic Similarity") +
-  ylim(0,0.35) + scale_alpha_continuous(range = c(0.3,1)) +
-  geom_hline(aes(yintercept = ssDF_CLV_MF[1,3]), linetype = "dashed", color = "blue") +
-  geom_hline(aes(yintercept = ssDF_CLV_MF[2,3]), linetype = "dashed", color = "green") +
-  geom_hline(aes(yintercept = ssDF_CLV_MF[3,3]), linetype = "dashed", color = "red") +
-  scale_fill_manual(values = c("brown", "darkorchid", "seagreen", "gold"),
-                    name = "none") +
-  ggtitle("Molecular Function") +
-  theme(
-    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-    legend.position = "none",
-    plot.title = element_text(size = 16, hjust = 0.5), axis.text=element_text(size=14),
-    legend.title = element_blank(), axis.title=element_text(size=14)) +
-  ggsave("FIG_6E_bottom.pdf", width = 6, height = 3)
-
-### Create legend for CLV lines on subline plots
-aa <- ggplot(ssDF_sublines_MF, aes(x = id, y = value, fill = id)) +
-  theme_classic() + labs(x = "Subline", y = "GO Semantic Similarity") +
-  ylim(0,0.35) +
-  geom_hline(aes(yintercept = ssDF_CLV_MF[1,3], color = "PC9-VU"), linetype = "dashed", show.legend = T) +
-  geom_hline(aes(yintercept = ssDF_CLV_MF[2,3], color = "PC9-MGH"), linetype = "dashed", show.legend = T) +
-  geom_hline(aes(yintercept = ssDF_CLV_MF[3,3], color = "PC9-BR1"), linetype = "dashed", show.legend = T) +
-  scale_color_manual(values = c("PC9-VU" = "blue", "PC9-MGH" = "green", "PC9-BR1" = "red")) +
-  theme(
-    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-    legend.position = "bottom",
-    plot.title = element_text(size = 14, hjust = 0.5), axis.text=element_text(size=12),
-    legend.title = element_blank(), axis.title=element_text(size=12)) 
-
-### Plot legend
-library(ggpubr)
-leg <- get_legend(aa)
-as_ggplot(leg) + ggsave("legend_FIG_4I_6E.pdf", width = 3, height = 1)
+    plot.title = element_text(size = 16, hjust = 0.5), axis.text=element_text(size=18),
+    legend.title = element_blank(), axis.title=element_text(size=18),
+    strip.text = element_text(size = 18), legend.position = "none") +
+  ggsave("FIG_S9.pdf", width = 12, height = 15)

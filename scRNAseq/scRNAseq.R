@@ -291,11 +291,11 @@ plt_all_UMAP <- DimPlot(dat_singlet_doubRem_poorRem_ex, reduction = "umap", grou
         axis.title = element_text(size=12), panel.grid.major = element_blank(),
         panel.grid.minor = element_blank())
 
-# ## All samples - not in paper
-# plt_all_UMAP + ggsave("UMAP_PopColored.svg", width = 4, height = 3)
-# plt_all_UMAP_leg <- ggpubr::get_legend(plt_all_UMAP)
-# as_ggplot(plt_all_UMAP_leg) + ggsave("UMAP_PopColored_legend.svg",
-#                                      width = 2.5, height = 4)
+## All samples - not in paper
+plt_all_UMAP + ggsave("UMAP_PopColored.svg", width = 4, height = 3)
+plt_all_UMAP_leg <- ggpubr::get_legend(plt_all_UMAP)
+as_ggplot(plt_all_UMAP_leg) + ggsave("UMAP_PopColored_legend.svg",
+                                     width = 2.5, height = 4)
 
 
 ## UMAP - by Population - only CLV
@@ -315,7 +315,7 @@ plt_CLV <- ggplot(CLV_plotDat,
 
 plt_CLV + ggsave("FIG_3F.svg", width = 4, height = 3)
 plt_CLV_leg <- ggpubr::get_legend(plt_CLV)
-as_ggplot(plt_CLV_leg) + ggsave("FIG_3F_legend.svg",
+as_ggplot(plt_CLV_leg) + ggsave("UMAP_PopColored_CLVonly_legend.svg",
                                 width = 2.5, height = 4)
 
 ## UMAP - by Population - sublines with CLV underlay
@@ -340,7 +340,7 @@ plt_sublines_CLVoverlay <- ggplot() + theme_bw() +
 plt_sublines_CLVoverlay + ggsave("FIG_4F.svg", 
                                  width = 4, height = 3)
 plt_sublines_CLVoverlay_leg <- ggpubr::get_legend(plt_sublines_CLVoverlay)
-as_ggplot(plt_sublines_CLVoverlay_leg) + ggsave("FIG_4F_legend.svg", 
+as_ggplot(plt_sublines_CLVoverlay_leg) + ggsave("UMAP_PopColored_sublines_CLVoverlay_legend.svg", 
                                                 width = 2.5, height = 4)
 
 ## UMAP - by cell cycle phase
@@ -363,7 +363,7 @@ plt_UMAP_CCphase <- ggplot(data = all8_plotDat,
 plt_UMAP_CCphase + ggsave("FIG_S11.svg", 
                           width = 4, height = 3)
 plt_UMAP_CCphase_leg <- ggpubr::get_legend(plt_UMAP_CCphase)
-as_ggplot(plt_UMAP_CCphase_leg) + ggsave("FIG_S11_leg.svg", 
+as_ggplot(plt_UMAP_CCphase_leg) + ggsave("UMAP_CCphaseColored_all8_leg.svg", 
                                          width = 2.5, height = 4)
 
 ## T-SNE - by Population
@@ -382,9 +382,9 @@ plt_tsne <- DimPlot(dat_singlet_doubRem_poorRem_ex, reduction = "tsne", group.by
         axis.title = element_text(size=12), panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()) 
 
-plt_tsne + ggsave("FIG_S6F.svg", width = 4, height = 3)
+plt_tsne + ggsave("TSNE_PopColored.svg", width = 4, height = 3)
 plt_tsne_leg <- ggpubr::get_legend(plt_tsne)
-as_ggplot(plt_tsne_leg) + ggsave("FIG_S6F_leg.svg",
+as_ggplot(plt_tsne_leg) + ggsave("FIG_S6F.svg",
                                  width = 2.5, height = 4)
 
 ## PCA - by Population
@@ -552,3 +552,85 @@ plt_all_overlay <- ggplot() + theme_bw() +
         axis.title=element_text(size=12)) 
 
 plt_all_overlay
+
+
+# Cluster biomarker identification
+## Find differentially expressed genes between different populations
+### Cell line versions
+dat_CLV <- dat_singlet_doubRem_poorRem_ex
+Idents(dat_CLV) <- "Population"
+
+tags_CLV <- c("VU", "MGH", "BR1")
+dat_CLV <- SubsetData(dat_CLV,ident.use = tags_CLV)
+marker_genes_CLV = list()
+for (tag in seq(length(tags_CLV))) {
+  marker_dat <- FindMarkers(dat_CLV,
+                            ident.1 = tags_CLV[tag],
+                            ident.2 = NULL, only.pos = FALSE)
+  marker_dat$Population <- tags_CLV[tag]
+  marker_genes_CLV[[tag]] <- marker_dat
+}
+
+VU_DEGs <- rownames(subset(marker_genes_CLV[[1]], p_val_adj < 0.05))
+MGH_DEGs <- rownames(subset(marker_genes_CLV[[2]], p_val_adj < 0.05))
+BR1_DEGs <- rownames(subset(marker_genes_CLV[[3]], p_val_adj < 0.05))
+
+#### Create DEG list of all CLV
+samples_CLV <- list("VU" = VU_DEGs, 
+                    "MGH" = MGH_DEGs, 
+                    "BR1" = BR1_DEGs)
+
+### Sublines
+dat_sublines <- dat_singlet_doubRem_poorRem_ex
+Idents(dat_sublines) <- "Population"
+
+tags_sublines <- c('DS3','DS6','DS7','DS8','DS9')
+dat_sublines <- SubsetData(dat_sublines,ident.use = tags_sublines)
+marker_genes_sublines = list()
+for (tag in seq(length(tags_sublines))) {
+  marker_dat <- FindMarkers(dat_sublines,
+                            ident.1 = tags_sublines[tag],
+                            ident.2 = NULL, only.pos = FALSE)
+  marker_dat$Population <- tags_sublines[tag]
+  marker_genes_sublines[[tag]] <- marker_dat
+}
+
+DS3_DEGs <- rownames(subset(marker_genes_sublines[[1]], p_val_adj < 0.05))
+DS6_DEGs <- rownames(subset(marker_genes_sublines[[2]], p_val_adj < 0.05))
+DS7_DEGs <- rownames(subset(marker_genes_sublines[[3]], p_val_adj < 0.05))
+DS8_DEGs <- rownames(subset(marker_genes_sublines[[4]], p_val_adj < 0.05))
+DS9_DEGs <- rownames(subset(marker_genes_sublines[[5]], p_val_adj < 0.05))
+
+#### Create DEG list of all CLV
+samples_sublines <- list("DS3" = DS3_DEGs,
+                         "DS6" = DS6_DEGs,
+                         "DS7" = DS7_DEGs,
+                         "DS8" = DS8_DEGs,
+                         "DS9" = DS9_DEGs)
+
+
+# # Save all the differentially expressed gene lists for GO semantic similarity analysis
+# save(VU_DEGs, MGH_DEGs, BR1_DEGs,
+#      DS3_DEGs, DS6_DEGs, DS7_DEGs, DS8_DEGs, DS9_DEGs,
+#      file = "~/git/GES_2020/scRNAseq/DEGs_byCohort_hg38.RData")
+# load("~/git/GES_2020/scRNAseq/DEGs_byCohort_hg38.RData")
+
+# # Create lists of impactful mutations from GES_2020/WES/WES.R
+# ## Load data from that folder
+# load('~/git/GES_2020/WES/variants_byCohort.RData')
+# ## Create list of IMPACT mutations for CLV
+# samples_muts_CLV <- list("VU" = unique((subset(test_s1_dedup, Impact %in% c("LOW", "MODERATE", "HIGH"))$Symbol)),
+#                          "MGH" = unique((subset(test_s2_dedup, Impact %in% c("LOW", "MODERATE", "HIGH"))$Symbol)),
+#                          "BR1" = unique((subset(test_s3_dedup, Impact %in% c("LOW", "MODERATE", "HIGH"))$Symbol)))
+# 
+# ## Create list of IMPACT mutations for sublines
+# samples_muts_sublines <- list("DS3" = unique(subset(test_s4_dedup, Impact %in% c("LOW", "MODERATE", "HIGH"))$Symbol),
+#                               "DS6" = unique(subset(test_s5_dedup, Impact %in% c("LOW", "MODERATE", "HIGH"))$Symbol),
+#                               "DS7" = unique(subset(test_s6_dedup, Impact %in% c("LOW", "MODERATE", "HIGH"))$Symbol),
+#                               "DS8" = unique(subset(test_s7_dedup, Impact %in% c("LOW", "MODERATE", "HIGH"))$Symbol),
+#                               "DS9" = unique(subset(test_s8_dedup, Impact %in% c("LOW", "MODERATE", "HIGH"))$Symbol))
+
+# # Save all the differentially expressed gene lists for GO semantic similarity analysis
+# save(samples_CLV, samples_muts_CLV,
+#      samples_sublines, samples_muts_sublines,
+#      file = "~/git/GES_2020/GO/mutations_DEGs-hg38.RData")
