@@ -1,4 +1,4 @@
-# GES_2021
+# GES_2020
 Code (data analysis and model simulations) for Genetic (G) / Epigenetic (E) / Stochastic (S)  paper (2020). 
 
 DrugResponse folder includes drug-response count data (csv), annotated by files in
