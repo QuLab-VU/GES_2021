@@ -40,9 +40,15 @@ ggplot(num_muts, aes(x=Sample, y=value, fill = variable)) +
   ggsave("FIG_S3A.pdf", width = 12, height = 4)
 
 # Initiate objects for data quality control (QC) analysis 
-vcf <- read.vcfR("/Users/Corey/Documents/QuarantaLab/PC9/WXS/accre_vars/samples_called_vars_named.vcf.gz", verbose = TRUE)
-dna <- ape::read.dna("/Volumes/quaranta/Data/WXS/bwa_ref_genome/Homo_sapiens_assembly38.fasta", format = "fasta")
-gff <- read.table("/Volumes/quaranta/Data/RNAseq/PC9_scRNAseq/genes.gtf", sep="\t", quote="")
+vcf <- read.vcfR("~/git/GES_2020/WES/samples_called_vars_named.vcf.gz", verbose = TRUE)
+
+# Download from: https://github.com/broadinstitute/gatk/tree/master/src/test/resources/large
+dna <- ape::read.dna("Homo_sapiens_assembly38.fasta", format = "fasta")
+
+# Download from: ftp://ftp.ensembl.org/pub/release-98/gtf/homo_sapiens/
+## I pulled directly from removed genes.gtf file that is the same as above
+## File used to be located here: https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/advanced/references
+gff <- read.table("genes.gtf", sep="\t", quote="")
 
 # Plot QC metrics for compiled dataset (all variants in all samples) - FIG. S3B
 chrom <- create.chromR(name="Supercontig", vcf=vcf, seq=dna, ann=gff, verbose=TRUE)
