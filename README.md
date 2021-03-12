@@ -2,7 +2,7 @@
 
 ---
 
-### ***Instructions for creating panels in all main and supplementary figures based on experimental and simulated data in this repository***
+### ***&ast;Instructions for creating panels in all main and supplementary figures based on experimental and simulated data in this repository***
 
 - #### <ins>MAIN FIGURES</ins>
 
