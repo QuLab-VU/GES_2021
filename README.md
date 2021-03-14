@@ -80,7 +80,7 @@
 		
 	- #### <ins>SUPPLEMENTARY FIGURE S5</ins>
 		
-		**Panel A**: Screenshot of the summarized output from the [CellRanger](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/installation) quality control analysis on the scRNA-seq library (available in the [Gene Expression Omnibus](https://www.ncbi.nlm.nih.gov/geo/) (GEO) data repository at accession \#GSE150084). Settings are shown in the image, which is stored as `CellRanger_PC9.svg` in the [scRNAseq](https://github.com/QuLab-VU/GES_2021/tree/master/scRNAseq) directory. 
+		**Panel A**: Screenshot of the summarized output from the [Cell Ranger](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/installation) quality control analysis on the scRNA-seq library (available in the [Gene Expression Omnibus](https://www.ncbi.nlm.nih.gov/geo/) (GEO) data repository at accession \#GSE150084). Settings are shown in the image, which is stored as `CellRanger_PC9.svg` in the [scRNAseq](https://github.com/QuLab-VU/GES_2021/tree/master/scRNAseq) directory. 
 		
 		**Panel B**: In the [scRNAseq](https://github.com/QuLab-VU/GES_2021/tree/master/scRNAseq) directory, run `scRNAseq.R`, which pulls from 10x Genomics reduced data in the [scRNAseq/read_count](https://github.com/QuLab-VU/GES_2021/tree/master/scRNAseq/read_count) and [scRNAseq/umi_count](https://github.com/QuLab-VU/GES_2021/tree/master/scRNAseq/umi_count) subdirectories.
 		 
