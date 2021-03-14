@@ -54,7 +54,7 @@
 
 	- #### <ins>SUPPLEMENTARY FIGURE S1</ins>
 		
-		**Panel A**: Screenshot of the EGFR gene from the [Integrative Genomics Viewer](https://software.broadinstitute.org/software/igv/) (IGV) based on raw exome sequencing data (avaiable in the [Sequence Read Archive](https://www.ncbi.nlm.nih.gov/sra) (SRA) at accession \#PRJNA632351). Image is stored as `PC9-EGFRgene_mutations_ex19delCommon.svg` in the [WES](https://github.com/QuLab-VU/GES_2021/tree/master/WES) directory.
+		**Panel A**: Screenshot of the EGFR gene from the [Integrative Genomics Viewer](https://software.broadinstitute.org/software/igv/) (IGV) based on raw exome sequencing data (available in the [Sequence Read Archive](https://www.ncbi.nlm.nih.gov/sra) (SRA) at accession \#PRJNA632351). Image is stored as `PC9-EGFRgene_mutations_ex19delCommon.svg` in the [WES](https://github.com/QuLab-VU/GES_2021/tree/master/WES) directory.
 		
 		**Panel B**: ***N/A***
 		
