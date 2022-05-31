@@ -1,4 +1,4 @@
-## Data repository for &quot;An *in vitro* model of tumor heterogeneity resolves genetic, epigenetic, and stochastic sources of cell state variability,&quot; Hayford et al. (2021), *[PLoS Biology 19 : e3000797]; [DOI: 10.1371/journal.pbio.3000797](http://dx.doi.org/10.1371/journal.pbio.3000797)*
+## Data repository for &quot;An *in vitro* model of tumor heterogeneity resolves genetic, epigenetic, and stochastic sources of cell state variability,&quot; Hayford et al. (2021), *PLoS Biology 19 : e3000797; [DOI: 10.1371/journal.pbio.3000797](http://dx.doi.org/10.1371/journal.pbio.3000797)*
 
 ---
 
